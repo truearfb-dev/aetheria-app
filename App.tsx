@@ -114,7 +114,7 @@ const App: React.FC = () => {
   // Locking Logic:
   // Locked if: Not Premium AND visited more than 3 times AND hasn't unlocked today
   const isLocked = userData 
-    ? !userData.isPremium && userData.visitCount > 3 && !userData.isUnlockedToday 
+    ? !userData.isPremium && userData.visitCount > 0 && !userData.isUnlockedToday 
     : false;
 
   return (
