@@ -8,11 +8,12 @@ interface DashboardProps {
   user: UserProfile;
   prediction: DailyPrediction;
   isLocked: boolean;
-  onUnlock: () => void;
+  onUnlockPremium: () => void;
+  onUnlockDaily: () => void;
   onReset: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, prediction, isLocked, onUnlock, onReset }) => {
+const Dashboard: React.FC<DashboardProps> = ({ user, prediction, isLocked, onUnlockPremium, onUnlockDaily, onReset }) => {
   const tg = getTelegramWebApp();
   const [oracleOpen, setOracleOpen] = useState(false);
   const [oracleQuestion, setOracleQuestion] = useState('');
@@ -22,7 +23,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, prediction, isLocked, onUnl
   const handleShare = () => {
     triggerHaptic('medium');
     const text = `✨ ЭТЕРИЯ: Моя карта дня — ${prediction.tarotCard.name}.\n🔮 Знак: ${user.zodiacSign}\n\nУзнай, что звезды говорят о тебе:`;
-    const url = "https://t.me/AetheriaBot/app"; // Replace with your actual bot link
+    const url = "https://t.me/AetheriaBot/app"; 
     
     if (tg) {
         tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
@@ -96,7 +97,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, prediction, isLocked, onUnl
                 "{prediction.text}"
             </p>
         </div>
-        {isLocked && <Paywall onUnlock={onUnlock} />}
+        {isLocked && (
+            <Paywall 
+                onUnlockPremium={onUnlockPremium} 
+                onUnlockDaily={onUnlockDaily} 
+            />
+        )}
       </section>
 
       {/* Lucky Color */}

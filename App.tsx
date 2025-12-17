@@ -25,23 +25,17 @@ const App: React.FC = () => {
       const data: AppData = JSON.parse(saved);
       const today = new Date().toDateString();
       
-      // Update visit logic
       let newData = { ...data };
+
+      // New Day Logic
       if (data.lastVisitDate !== today) {
         newData.visitCount += 1;
         newData.lastVisitDate = today;
-        // Reset daily text if it's a new day so we generate a new one
-        if (prediction) {
-            // Logic handled when generating prediction
-        }
+        newData.isUnlockedToday = false; // Reset daily unlock
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
       }
       
       setUserData(newData);
-      
-      // Check if we have a generated text for today already stored in prediction?
-      // For simplicity, we regenerate base stats deterministically, and if AI text is missing, Dashboard handles it or we re-run ritual logic if needed. 
-      // Current simple logic: Just load dashboard.
       setPrediction(generateDailyPrediction(data.user!.zodiacSign));
       setStage(AppStage.DASHBOARD);
     }
@@ -59,24 +53,18 @@ const App: React.FC = () => {
       user: userProfile,
       visitCount: 1,
       lastVisitDate: new Date().toDateString(),
-      isPremium: false
+      isPremium: false,
+      isUnlockedToday: false
     };
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
     setUserData(newData);
-    
-    // Generate base stats immediately
     setPrediction(generateDailyPrediction(zodiac));
-    
-    // Move to Ritual
     setStage(AppStage.RITUAL);
   };
 
-  // This function runs while the Ritual animation is playing
   const handleRitualStart = async () => {
     if (!userData || !prediction) return;
-    
-    // AI Generation happening in background
     try {
         const aiText = await generateDailyHoroscope(userData.user!.zodiacSign, userData.user!.name);
         if (aiText) {
@@ -92,15 +80,26 @@ const App: React.FC = () => {
     setStage(AppStage.DASHBOARD);
   };
 
+  // Option 1: Buy Premium (Lifetime)
   const handleUnlockPremium = () => {
     if (userData) {
       const updatedData = { ...userData, isPremium: true };
       setUserData(updatedData);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
       triggerNotification('success');
-      alert("Оплата прошла успешно! Руководство разблокировано.");
+      alert("✨ Премиум активирован! Все тайны вселенной теперь доступны.");
     }
   };
+
+  // Option 2: Subscribe to Channel (Daily Unlock)
+  const handleUnlockDaily = () => {
+    if (userData) {
+        const updatedData = { ...userData, isUnlockedToday: true };
+        setUserData(updatedData);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
+        triggerNotification('success');
+    }
+  }
 
   const handleResetApp = () => {
     if (window.confirm("Вы уверены? Это сотрет ваши данные и прогресс.")) {
@@ -111,6 +110,12 @@ const App: React.FC = () => {
         setStage(AppStage.ONBOARDING);
     }
   };
+
+  // Locking Logic:
+  // Locked if: Not Premium AND visited more than 3 times AND hasn't unlocked today
+  const isLocked = userData 
+    ? !userData.isPremium && userData.visitCount > 3 && !userData.isUnlockedToday 
+    : false;
 
   return (
     <main className="min-h-screen w-full relative overflow-hidden bg-void">
@@ -132,8 +137,9 @@ const App: React.FC = () => {
         <Dashboard 
           user={userData.user!} 
           prediction={prediction}
-          isLocked={userData.visitCount >= 4 && !userData.isPremium} 
-          onUnlock={handleUnlockPremium}
+          isLocked={isLocked} 
+          onUnlockPremium={handleUnlockPremium}
+          onUnlockDaily={handleUnlockDaily}
           onReset={handleResetApp}
         />
       )}

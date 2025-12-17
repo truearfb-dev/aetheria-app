@@ -9,6 +9,7 @@ export interface AppData {
   visitCount: number;
   lastVisitDate: string; // YYYY-MM-DD
   isPremium: boolean;
+  isUnlockedToday: boolean; // New field: true if user watched ad or subbed to channel today
 }
 
 export enum AppStage {
