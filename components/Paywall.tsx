@@ -10,7 +10,7 @@ const Paywall: React.FC<PaywallProps> = ({ onUnlockPremium, onUnlockDaily }) => 
   const tg = getTelegramWebApp();
   
   // Replace this with your actual Telegram Channel Link
-  const CHANNEL_URL = "https://t.me/durov"; 
+  const CHANNEL_URL = "https://t.me/+agv13DXReBY1MzYy"; 
 
   const handlePremiumClick = () => {
     // Simulate payment flow
