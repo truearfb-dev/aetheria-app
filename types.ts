@@ -9,7 +9,8 @@ export interface AppData {
   visitCount: number;
   lastVisitDate: string; // YYYY-MM-DD
   isPremium: boolean;
-  isUnlockedToday: boolean; // New field: true if user watched ad or subbed to channel today
+  isUnlockedToday: boolean;
+  oracleTokens: number; // New: Currency for asking AI questions
 }
 
 export enum AppStage {
@@ -54,11 +55,14 @@ export interface TelegramWebApp {
     setText: (text: string) => void;
   };
   openTelegramLink: (url: string) => void;
+  // invoiceSlug is the URL returned by createInvoiceLink
+  openInvoice: (invoiceSlug: string, callback?: (status: 'paid' | 'cancelled' | 'failed' | 'pending') => void) => void;
   initDataUnsafe?: {
     user?: {
       first_name?: string;
       last_name?: string;
       username?: string;
+      id?: number;
     }
   }
 }

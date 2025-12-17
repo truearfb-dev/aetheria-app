@@ -8,12 +8,18 @@ interface DashboardProps {
   user: UserProfile;
   prediction: DailyPrediction;
   isLocked: boolean;
+  oracleTokens: number;
   onUnlockPremium: () => void;
   onUnlockDaily: () => void;
+  onConsumeToken: () => boolean;
+  onBuyTokens: () => void;
   onReset: () => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, prediction, isLocked, onUnlockPremium, onUnlockDaily, onReset }) => {
+const Dashboard: React.FC<DashboardProps> = ({ 
+    user, prediction, isLocked, oracleTokens,
+    onUnlockPremium, onUnlockDaily, onConsumeToken, onBuyTokens, onReset 
+}) => {
   const tg = getTelegramWebApp();
   const [oracleOpen, setOracleOpen] = useState(false);
   const [oracleQuestion, setOracleQuestion] = useState('');
@@ -34,6 +40,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, prediction, isLocked, onUnl
 
   const handleOracleConsult = async () => {
     if (!oracleQuestion.trim()) return;
+
+    // Check balance
+    if (oracleTokens <= 0) {
+        triggerNotification('warning');
+        onBuyTokens();
+        return;
+    }
+
+    // Consume token
+    if (!onConsumeToken()) return;
+
     triggerHaptic('heavy');
     setIsConsulting(true);
     setOracleAnswer(null);
@@ -123,13 +140,17 @@ const Dashboard: React.FC<DashboardProps> = ({ user, prediction, isLocked, onUnl
             onClick={toggleOracle}
             className="w-full py-3 border border-neon/50 bg-neon/5 rounded-xl text-neon font-cinzel text-sm uppercase tracking-widest hover:bg-neon/10 transition-colors active:scale-95 duration-200"
           >
-              {oracleOpen ? "Закрыть Глаз" : "Спросить Оракула"}
+              {oracleOpen ? "Закрыть Глаз" : `Спросить Оракула (${oracleTokens} 🔮)`}
           </button>
           
           {oracleOpen && (
               <div className="mt-4 p-4 rounded-xl bg-black/40 border border-neon/30 animate-float">
                   {!oracleAnswer ? (
                       <>
+                        <div className="flex justify-between items-center mb-2">
+                             <span className="text-[10px] text-gray-400 uppercase">Баланс: {oracleTokens} вопросов</span>
+                             <button onClick={onBuyTokens} className="text-[10px] text-gold underline">Пополнить (59₽)</button>
+                        </div>
                         <input 
                             type="text" 
                             placeholder="Что ты ищешь?" 
@@ -142,7 +163,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, prediction, isLocked, onUnl
                             onClick={handleOracleConsult}
                             className="w-full bg-neon text-white font-cinzel text-xs py-2 rounded disabled:opacity-50 active:scale-95 transition-transform"
                         >
-                            {isConsulting ? "Вопрошаю..." : "Узнать"}
+                            {isConsulting ? "Вопрошаю..." : oracleTokens > 0 ? "Узнать (1 🔮)" : "Купить Энергию"}
                         </button>
                       </>
                   ) : (

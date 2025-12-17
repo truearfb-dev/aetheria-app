@@ -3,6 +3,7 @@ import { AppStage, UserProfile, AppData, DailyPrediction } from './types';
 import { getZodiacSign, generateDailyPrediction } from './utils/mystic';
 import { initTelegramApp, triggerNotification } from './services/telegram';
 import { generateDailyHoroscope } from './services/geminiService';
+import { handlePayment } from './services/payment';
 import StarBackground from './components/StarBackground';
 import Onboarding from './components/Onboarding';
 import Ritual from './components/Ritual';
@@ -31,8 +32,12 @@ const App: React.FC = () => {
       if (data.lastVisitDate !== today) {
         newData.visitCount += 1;
         newData.lastVisitDate = today;
-        newData.isUnlockedToday = false; // Reset daily unlock
+        newData.isUnlockedToday = false;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
+      }
+      
+      if (newData.oracleTokens === undefined) {
+          newData.oracleTokens = 1;
       }
       
       setUserData(newData);
@@ -54,7 +59,8 @@ const App: React.FC = () => {
       visitCount: 1,
       lastVisitDate: new Date().toDateString(),
       isPremium: false,
-      isUnlockedToday: false
+      isUnlockedToday: false,
+      oracleTokens: 1 
     };
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
@@ -80,26 +86,66 @@ const App: React.FC = () => {
     setStage(AppStage.DASHBOARD);
   };
 
-  // Option 1: Buy Premium (Lifetime)
-  const handleUnlockPremium = () => {
-    if (userData) {
-      const updatedData = { ...userData, isPremium: true };
-      setUserData(updatedData);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
-      triggerNotification('success');
-      alert("✨ Премиум активирован! Все тайны вселенной теперь доступны.");
-    }
+  const saveUserData = (data: AppData) => {
+      setUserData(data);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   };
 
-  // Option 2: Subscribe to Channel (Daily Unlock)
+  // --- PAYMENT LOGIC ---
+
+  // 1. Buy Premium (Rubles via Payment Provider)
+  const handleUnlockPremium = () => {
+    if (!userData) return;
+
+    handlePayment('premium_lifetime', 
+        () => {
+            // Success Callback
+            const updatedData = { ...userData, isPremium: true };
+            saveUserData(updatedData);
+            triggerNotification('success');
+            // В реальном приложении здесь можно показать красивый модал успеха
+        },
+        () => {
+            // Cancel/Fail Callback
+            triggerNotification('error');
+        }
+    );
+  };
+
+  // 2. Buy Tokens (Rubles via Payment Provider)
+  const handleBuyTokens = () => {
+    if (!userData) return;
+
+    handlePayment('tokens_pack_small',
+        () => {
+            const updatedData = { ...userData, oracleTokens: userData.oracleTokens + 5 };
+            saveUserData(updatedData);
+            triggerNotification('success');
+        },
+        () => {
+            triggerNotification('error');
+        }
+    );
+  };
+
+  // ---------------------
+
   const handleUnlockDaily = () => {
     if (userData) {
         const updatedData = { ...userData, isUnlockedToday: true };
-        setUserData(updatedData);
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
+        saveUserData(updatedData);
         triggerNotification('success');
     }
-  }
+  };
+
+  const handleConsumeToken = () => {
+      if (userData && userData.oracleTokens > 0) {
+          const updatedData = { ...userData, oracleTokens: userData.oracleTokens - 1 };
+          saveUserData(updatedData);
+          return true;
+      }
+      return false;
+  };
 
   const handleResetApp = () => {
     if (window.confirm("Вы уверены? Это сотрет ваши данные и прогресс.")) {
@@ -111,10 +157,8 @@ const App: React.FC = () => {
     }
   };
 
-  // Locking Logic:
-  // Locked if: Not Premium AND visited more than 3 times AND hasn't unlocked today
   const isLocked = userData 
-    ? !userData.isPremium && userData.visitCount > 0 && !userData.isUnlockedToday 
+    ? !userData.isPremium && userData.visitCount > 3 && !userData.isUnlockedToday 
     : false;
 
   return (
@@ -138,8 +182,11 @@ const App: React.FC = () => {
           user={userData.user!} 
           prediction={prediction}
           isLocked={isLocked} 
+          oracleTokens={userData.oracleTokens}
           onUnlockPremium={handleUnlockPremium}
           onUnlockDaily={handleUnlockDaily}
+          onConsumeToken={handleConsumeToken}
+          onBuyTokens={handleBuyTokens}
           onReset={handleResetApp}
         />
       )}
