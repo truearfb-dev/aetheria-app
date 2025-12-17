@@ -11,9 +11,22 @@ export default async function handler(req, res) {
     const BOT_TOKEN = process.env.BOT_TOKEN;
     const PROVIDER_TOKEN = process.env.PROVIDER_TOKEN;
 
-    if (!BOT_TOKEN || !PROVIDER_TOKEN) {
-      console.error("Missing tokens on server");
-      return res.status(500).json({ error: 'Server misconfigured: missing tokens' });
+    // Подробная проверка для отладки
+    if (!BOT_TOKEN) {
+      console.error("CRITICAL ERROR: 'BOT_TOKEN' is missing in Vercel Environment Variables.");
+      return res.status(500).json({ error: 'Server Config Error: BOT_TOKEN is missing' });
+    }
+    if (!PROVIDER_TOKEN) {
+      console.error("CRITICAL ERROR: 'PROVIDER_TOKEN' is missing in Vercel Environment Variables.");
+      return res.status(500).json({ error: 'Server Config Error: PROVIDER_TOKEN is missing' });
+    }
+
+    // Проверка формата токена (Токены платежей Telegram обычно содержат двоеточия, например 123:TEST:abc)
+    // Ключи ЮКассы (test_...) двоеточий не содержат.
+    if (!PROVIDER_TOKEN.includes(':') && PROVIDER_TOKEN.startsWith('test_')) {
+       console.error("CONFIGURATION ERROR: Похоже, вы вставили Secret Key от ЮКассы прямо в Vercel.");
+       console.error("Нужно сначала подключить ЮКассу в @BotFather, получить от него токен (вида 123:TEST:...) и вставить в Vercel ЕГО.");
+       return res.status(500).json({ error: 'Invalid PROVIDER_TOKEN format. Check Vercel logs.' });
     }
 
     // Настройка товара
@@ -55,6 +68,7 @@ export default async function handler(req, res) {
     const data = await response.json();
 
     if (!data.ok) {
+      console.error("Telegram API Error Response:", data);
       throw new Error(data.description || 'Telegram API Error');
     }
 
