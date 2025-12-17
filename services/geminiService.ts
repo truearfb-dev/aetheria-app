@@ -18,7 +18,7 @@ export const askTheOracle = async (
       Keep it under 50 words.
       Use a tone that is ancient, respectful, and slightly dark but encouraging.`,
       config: {
-        thinkingConfig: { thinkingBudget: 0 } // Flash model, minimal thinking needed for this
+        thinkingConfig: { thinkingBudget: 0 } // Flash model
       }
     });
 
@@ -27,4 +27,29 @@ export const askTheOracle = async (
     console.error("Oracle Error:", error);
     return "Связь с астральным планом слаба. Попробуйте позже.";
   }
+};
+
+export const generateDailyHoroscope = async (
+    zodiac: string,
+    name: string
+): Promise<string> => {
+    try {
+        const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: `Generate a daily horoscope for ${name} (Zodiac: ${zodiac}).
+            Language: Russian.
+            Tone: Mystical, immersive, slightly esoteric but grounded in advice.
+            Structure: One profound paragraph (approx 30-40 words).
+            Focus: Personal growth and hidden opportunities.
+            Do NOT use standard greetings. Start immediately with the prophecy.`,
+            config: {
+                thinkingConfig: { thinkingBudget: 0 }
+            }
+        });
+        return response.text || "Туман скрывает грядущее. Прислушайся к интуиции.";
+    } catch (error) {
+        console.error("Horoscope Error:", error);
+        // Fallback text is handled by the caller or UI
+        return "";
+    }
 };

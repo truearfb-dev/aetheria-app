@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { UserProfile, DailyPrediction } from '../types';
 import Paywall from './Paywall';
-import { getTelegramWebApp } from '../services/telegram';
+import { getTelegramWebApp, triggerHaptic, triggerNotification } from '../services/telegram';
 import { askTheOracle } from '../services/geminiService';
 
 interface DashboardProps {
@@ -20,12 +20,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, prediction, isLocked, onUnl
   const [isConsulting, setIsConsulting] = useState(false);
 
   const handleShare = () => {
-    const text = `Я получил своё мистическое руководство в Этерии! 
-    ✨ Знак: ${user.zodiacSign}
-    🔮 Карта дня: ${prediction.tarotCard.name}
-    
-    Узнай свою судьбу здесь:`;
-    const url = "https://t.me/YourBotName"; 
+    triggerHaptic('medium');
+    const text = `✨ ЭТЕРИЯ: Моя карта дня — ${prediction.tarotCard.name}.\n🔮 Знак: ${user.zodiacSign}\n\nУзнай, что звезды говорят о тебе:`;
+    const url = "https://t.me/AetheriaBot/app"; // Replace with your actual bot link
     
     if (tg) {
         tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
@@ -36,12 +33,19 @@ const Dashboard: React.FC<DashboardProps> = ({ user, prediction, isLocked, onUnl
 
   const handleOracleConsult = async () => {
     if (!oracleQuestion.trim()) return;
+    triggerHaptic('heavy');
     setIsConsulting(true);
     setOracleAnswer(null);
     const answer = await askTheOracle(oracleQuestion, user.zodiacSign, user.name);
+    triggerNotification('success');
     setOracleAnswer(answer);
     setIsConsulting(false);
   };
+
+  const toggleOracle = () => {
+      triggerHaptic('light');
+      setOracleOpen(!oracleOpen);
+  }
 
   return (
     <div className="relative z-10 p-6 max-w-lg mx-auto pb-24 animate-fadeIn">
@@ -58,9 +62,9 @@ const Dashboard: React.FC<DashboardProps> = ({ user, prediction, isLocked, onUnl
       </header>
 
       {/* Tarot Card of the Day */}
-      <section className="mb-8 flex flex-col items-center">
+      <section className="mb-8 flex flex-col items-center" onClick={() => triggerHaptic('light')}>
         <h2 className="font-cinzel text-gray-400 text-xs tracking-[0.2em] mb-4 uppercase">Карта Дня</h2>
-        <div className="w-48 h-72 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] rounded-xl border border-gold/30 shadow-[0_0_30px_rgba(212,175,55,0.1)] flex flex-col items-center justify-center p-4 relative group hover:border-gold/60 transition-all duration-500">
+        <div className="w-48 h-72 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] rounded-xl border border-gold/30 shadow-[0_0_30px_rgba(212,175,55,0.1)] flex flex-col items-center justify-center p-4 relative group hover:border-gold/60 transition-all duration-500 transform active:scale-95">
             <div className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-500 filter drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
                 {prediction.tarotCard.icon}
             </div>
@@ -83,10 +87,12 @@ const Dashboard: React.FC<DashboardProps> = ({ user, prediction, isLocked, onUnl
       </div>
 
       {/* Main Prediction Card (Locked/Unlocked) */}
-      <section className="relative mb-6 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md overflow-hidden">
-        <h2 className="font-cinzel text-gold text-lg mb-4 text-center">Звездный Совет</h2>
-        <div className={`relative transition-all duration-700 ${isLocked ? 'blur-md opacity-50 select-none' : 'opacity-100'}`}>
-            <p className="font-lato text-gray-200 leading-relaxed text-center italic">
+      <section className="relative mb-6 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md overflow-hidden min-h-[150px] flex items-center justify-center">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-1 bg-gold shadow-[0_0_20px_#D4AF37]"></div>
+        
+        <div className={`relative transition-all duration-700 w-full ${isLocked ? 'blur-md opacity-50 select-none' : 'opacity-100'}`}>
+             {/* If prediction.text starts with default value, it means AI failed or loading, but we show it anyway */}
+            <p className="font-lato text-gray-200 leading-relaxed text-center italic text-sm">
                 "{prediction.text}"
             </p>
         </div>
@@ -108,8 +114,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, prediction, isLocked, onUnl
       {/* Oracle Feature */}
       <section className="mb-8">
           <button 
-            onClick={() => setOracleOpen(!oracleOpen)}
-            className="w-full py-3 border border-neon/50 bg-neon/5 rounded-xl text-neon font-cinzel text-sm uppercase tracking-widest hover:bg-neon/10 transition-colors"
+            onClick={toggleOracle}
+            className="w-full py-3 border border-neon/50 bg-neon/5 rounded-xl text-neon font-cinzel text-sm uppercase tracking-widest hover:bg-neon/10 transition-colors active:scale-95 duration-200"
           >
               {oracleOpen ? "Закрыть Глаз" : "Спросить Оракула"}
           </button>
@@ -128,7 +134,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, prediction, isLocked, onUnl
                         <button 
                             disabled={isConsulting || !oracleQuestion}
                             onClick={handleOracleConsult}
-                            className="w-full bg-neon text-white font-cinzel text-xs py-2 rounded disabled:opacity-50"
+                            className="w-full bg-neon text-white font-cinzel text-xs py-2 rounded disabled:opacity-50 active:scale-95 transition-transform"
                         >
                             {isConsulting ? "Вопрошаю..." : "Узнать"}
                         </button>
@@ -138,7 +144,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, prediction, isLocked, onUnl
                           <p className="font-cinzel text-neon mb-2 text-sm">Оракул говорит:</p>
                           <p className="font-lato text-sm text-gray-300">{oracleAnswer}</p>
                           <button 
-                            onClick={() => { setOracleAnswer(null); setOracleQuestion(''); }}
+                            onClick={() => { triggerHaptic('light'); setOracleAnswer(null); setOracleQuestion(''); }}
                             className="mt-4 text-xs text-gray-500 hover:text-white"
                           >
                               Спросить еще
@@ -153,16 +159,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, prediction, isLocked, onUnl
       <div className="flex flex-col gap-4">
         <button 
             onClick={handleShare}
-            className="w-full bg-white/10 hover:bg-white/20 text-white font-cinzel py-4 rounded-xl border border-white/20 transition-all uppercase tracking-widest text-sm"
+            className="w-full bg-white/10 hover:bg-white/20 text-white font-cinzel py-4 rounded-xl border border-white/20 transition-all uppercase tracking-widest text-sm active:scale-95"
         >
-            Поделиться
+            Поделиться Судьбой
         </button>
 
         <button 
             onClick={onReset}
             className="text-xs text-gray-600 hover:text-red-500 mt-4 transition-colors font-lato"
         >
-            [Сбросить данные (Reset App)]
+            [Сбросить данные]
         </button>
       </div>
 
@@ -179,7 +185,7 @@ const StatCircle: React.FC<{ label: string; value: number; color: string }> = ({
                     fill="none" stroke={color} strokeWidth="2" 
                     strokeDasharray={`${(value / 100) * 150}, 150`}
                     strokeLinecap="round"
-                    className="opacity-80 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)]"
+                    className="opacity-80 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] transition-all duration-1000 ease-out"
                 />
             </svg>
             <span className="font-lato font-bold text-xs text-white">{value}%</span>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getTelegramWebApp } from '../services/telegram';
+import { getTelegramWebApp, triggerHaptic } from '../services/telegram';
 
 interface OnboardingProps {
   onComplete: (name: string, date: string) => void;
@@ -22,6 +22,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
     const handleMainBtnClick = () => {
         if (name && date) {
+            triggerHaptic('heavy');
             onComplete(name, date);
         }
     };
@@ -43,6 +44,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (name && date) {
+      triggerHaptic('heavy');
       onComplete(name, date);
     }
   };
@@ -79,7 +81,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           <button
             type="submit"
             disabled={!name || !date}
-            className="w-full mt-6 bg-gold/10 hover:bg-gold/20 text-gold border border-gold/50 font-cinzel py-3 rounded-lg uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(212,175,55,0.1)] hover:shadow-[0_0_20px_rgba(212,175,55,0.3)]"
+            className="w-full mt-6 bg-gold/10 hover:bg-gold/20 text-gold border border-gold/50 font-cinzel py-3 rounded-lg uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(212,175,55,0.1)] hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] active:scale-95"
           >
             Узнать Судьбу
           </button>

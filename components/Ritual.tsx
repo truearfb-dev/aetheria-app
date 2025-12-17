@@ -1,14 +1,23 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import { triggerHaptic } from '../services/telegram';
 
 interface RitualProps {
   zodiac: string;
   onComplete: () => void;
+  onStart: () => void;
 }
 
-const Ritual: React.FC<RitualProps> = ({ zodiac, onComplete }) => {
+const Ritual: React.FC<RitualProps> = ({ zodiac, onComplete, onStart }) => {
   const [text, setText] = useState("Выравнивание Звездной Пыли...");
+  const hasStartedRef = useRef(false);
 
   useEffect(() => {
+    if (!hasStartedRef.current) {
+        hasStartedRef.current = true;
+        onStart(); // Trigger AI loading
+        triggerHaptic('medium');
+    }
+
     const texts = [
       "Чтение Небесной Карты...",
       `Связь с энергией: ${zodiac}...`,
@@ -19,19 +28,20 @@ const Ritual: React.FC<RitualProps> = ({ zodiac, onComplete }) => {
     const interval = setInterval(() => {
       if (step < texts.length) {
         setText(texts[step]);
+        triggerHaptic('light'); // Taptic feedback on step change
         step++;
       }
-    }, 1000);
+    }, 1200);
 
     const timer = setTimeout(() => {
       onComplete();
-    }, 4000);
+    }, 4500); // Slightly longer to ensure AI has time
 
     return () => {
       clearInterval(interval);
       clearTimeout(timer);
     };
-  }, [zodiac, onComplete]);
+  }, [zodiac, onComplete, onStart]);
 
   return (
     <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-6 text-center">

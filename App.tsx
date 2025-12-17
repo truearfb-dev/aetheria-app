@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { AppStage, UserProfile, AppData, DailyPrediction } from './types';
 import { getZodiacSign, generateDailyPrediction } from './utils/mystic';
-import { initTelegramApp } from './services/telegram';
+import { initTelegramApp, triggerNotification } from './services/telegram';
+import { generateDailyHoroscope } from './services/geminiService';
 import StarBackground from './components/StarBackground';
 import Onboarding from './components/Onboarding';
 import Ritual from './components/Ritual';
@@ -29,10 +30,18 @@ const App: React.FC = () => {
       if (data.lastVisitDate !== today) {
         newData.visitCount += 1;
         newData.lastVisitDate = today;
+        // Reset daily text if it's a new day so we generate a new one
+        if (prediction) {
+            // Logic handled when generating prediction
+        }
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
       }
       
       setUserData(newData);
+      
+      // Check if we have a generated text for today already stored in prediction?
+      // For simplicity, we regenerate base stats deterministically, and if AI text is missing, Dashboard handles it or we re-run ritual logic if needed. 
+      // Current simple logic: Just load dashboard.
       setPrediction(generateDailyPrediction(data.user!.zodiacSign));
       setStage(AppStage.DASHBOARD);
     }
@@ -55,13 +64,31 @@ const App: React.FC = () => {
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
     setUserData(newData);
+    
+    // Generate base stats immediately
     setPrediction(generateDailyPrediction(zodiac));
     
     // Move to Ritual
     setStage(AppStage.RITUAL);
   };
 
+  // This function runs while the Ritual animation is playing
+  const handleRitualStart = async () => {
+    if (!userData || !prediction) return;
+    
+    // AI Generation happening in background
+    try {
+        const aiText = await generateDailyHoroscope(userData.user!.zodiacSign, userData.user!.name);
+        if (aiText) {
+            setPrediction(prev => prev ? { ...prev, text: aiText } : null);
+        }
+    } catch (e) {
+        console.error("AI fetch failed during ritual", e);
+    }
+  };
+
   const handleRitualComplete = () => {
+    triggerNotification('success');
     setStage(AppStage.DASHBOARD);
   };
 
@@ -70,12 +97,14 @@ const App: React.FC = () => {
       const updatedData = { ...userData, isPremium: true };
       setUserData(updatedData);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedData));
+      triggerNotification('success');
       alert("Оплата прошла успешно! Руководство разблокировано.");
     }
   };
 
   const handleResetApp = () => {
     if (window.confirm("Вы уверены? Это сотрет ваши данные и прогресс.")) {
+        triggerNotification('warning');
         localStorage.removeItem(STORAGE_KEY);
         setUserData(null);
         setPrediction(null);
@@ -94,6 +123,7 @@ const App: React.FC = () => {
       {stage === AppStage.RITUAL && userData && (
         <Ritual 
             zodiac={userData.user!.zodiacSign} 
+            onStart={handleRitualStart}
             onComplete={handleRitualComplete} 
         />
       )}

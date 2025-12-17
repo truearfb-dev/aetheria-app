@@ -22,3 +22,18 @@ export const initTelegramApp = () => {
     }
   }
 };
+
+// Функция для вызова вибрации
+export const triggerHaptic = (style: 'light' | 'medium' | 'heavy' | 'rigid' | 'soft' = 'light') => {
+  const tg = getTelegramWebApp();
+  if (tg && (tg as any).HapticFeedback) {
+    (tg as any).HapticFeedback.impactOccurred(style);
+  }
+};
+
+export const triggerNotification = (type: 'error' | 'success' | 'warning') => {
+    const tg = getTelegramWebApp();
+    if (tg && (tg as any).HapticFeedback) {
+      (tg as any).HapticFeedback.notificationOccurred(type);
+    }
+};
