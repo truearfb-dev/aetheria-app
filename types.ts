@@ -33,6 +33,7 @@ export interface DailyPrediction {
   luckyColor: string;
   luckyColorHex: string;
   tarotCard: TarotCard;
+  teaser: string; // NEW: The hook headline (e.g. "⚠️ Warning: Betrayal")
 }
 
 // Telegram WebApp Types (Simplified)

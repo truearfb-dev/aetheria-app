@@ -1,7 +1,8 @@
-import { ZODIAC_SIGNS, COLD_READING_TEMPLATES, MYSTICAL_COLORS, TAROT_CARDS } from '../constants';
+import { ZODIAC_SIGNS, COLD_READING_TEMPLATES, MYSTICAL_COLORS, TAROT_CARDS, TEASERS } from '../constants';
 import { DailyPrediction } from '../types';
 
 export const getZodiacSign = (dateStr: string): string => {
+  if (!dateStr) return "";
   const date = new Date(dateStr);
   const day = date.getDate();
   const month = date.getMonth() + 1;
@@ -45,6 +46,9 @@ export const generateDailyPrediction = (zodiac: string): DailyPrediction => {
   const templateIndex = Math.floor(rng() * COLD_READING_TEMPLATES.length);
   const colorIndex = Math.floor(rng() * MYSTICAL_COLORS.length);
   const tarotIndex = Math.floor(rng() * TAROT_CARDS.length);
+  
+  // Choose a teaser that changes daily per user
+  const teaserIndex = Math.floor(rng() * TEASERS.length);
 
   return {
     text: COLD_READING_TEMPLATES[templateIndex],
@@ -53,6 +57,7 @@ export const generateDailyPrediction = (zodiac: string): DailyPrediction => {
     love: Math.floor(rng() * 61) + 40,  // 40-100
     luckyColor: MYSTICAL_COLORS[colorIndex].name,
     luckyColorHex: MYSTICAL_COLORS[colorIndex].hex,
-    tarotCard: TAROT_CARDS[tarotIndex]
+    tarotCard: TAROT_CARDS[tarotIndex],
+    teaser: TEASERS[teaserIndex]
   };
 };

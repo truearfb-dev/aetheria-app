@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { getTelegramWebApp, triggerHaptic } from '../services/telegram';
+import { getZodiacSign } from '../utils/mystic';
 
 interface OnboardingProps {
   onComplete: (name: string, date: string) => void;
@@ -8,6 +9,7 @@ interface OnboardingProps {
 const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
   const [name, setName] = useState('');
   const [date, setDate] = useState('');
+  const [zodiac, setZodiac] = useState('');
   const tg = getTelegramWebApp();
 
   // Auto-fill name from Telegram if available
@@ -16,6 +18,17 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       setName(tg.initDataUnsafe.user.first_name);
     }
   }, [tg]);
+
+  // Live Zodiac Calculation
+  useEffect(() => {
+      if (date) {
+          const sign = getZodiacSign(date);
+          setZodiac(sign);
+          if (sign) triggerHaptic('light');
+      } else {
+          setZodiac('');
+      }
+  }, [date]);
 
   useEffect(() => {
     if (!tg) return;
@@ -54,7 +67,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
       <h1 className="text-4xl font-cinzel text-gold mb-2 tracking-widest drop-shadow-lg">ЭТЕРИЯ</h1>
       <p className="text-gray-400 font-lato mb-8 tracking-wide uppercase text-xs">Начни свой путь</p>
 
-      <div className="w-full max-w-sm backdrop-blur-md bg-white/5 border border-white/10 p-8 rounded-2xl shadow-2xl">
+      <div className="w-full max-w-sm backdrop-blur-md bg-white/5 border border-white/10 p-8 rounded-2xl shadow-2xl transition-all duration-500">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="text-left">
             <label className="block text-xs uppercase tracking-wider text-gold mb-2 pl-1">Ваше Имя</label>
@@ -76,6 +89,17 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
               className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold transition-all font-lato"
               style={{ colorScheme: 'dark' }}
             />
+          </div>
+
+          {/* Instant Validation Hook */}
+          <div className={`overflow-hidden transition-all duration-500 ease-in-out ${zodiac ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="bg-gold/10 border border-gold/30 rounded-lg p-3 flex items-center justify-center gap-3">
+                  <span className="text-2xl animate-pulse">✨</span>
+                  <div className="text-left">
+                      <p className="text-gold font-cinzel text-sm">Вы — {zodiac}</p>
+                      <p className="text-[10px] text-gray-300 font-lato">Звезды узнали вас...</p>
+                  </div>
+              </div>
           </div>
 
           <button

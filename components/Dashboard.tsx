@@ -151,7 +151,7 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
       </section>
 
-      {/* 4. THE SEALED SCROLL */}
+      {/* 4. THE SEALED SCROLL (IMPROVED TEASER) */}
       <section className="mb-8">
         <h2 className="font-cinzel text-center text-gray-500 text-xs tracking-[0.3em] mb-4 uppercase">Личное Пророчество</h2>
         
@@ -159,7 +159,8 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20"></div>
             <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl"></div>
             
-            <div className={`relative p-6 h-full flex items-center justify-center transition-all duration-700 ${isLocked ? 'blur-sm opacity-60' : 'opacity-100'}`}>
+            {/* Locked Content */}
+            <div className={`relative p-6 h-full flex flex-col items-center justify-center transition-all duration-700 ${isLocked ? 'blur-sm opacity-60' : 'opacity-100'}`}>
                  <p className="font-cinzel text-center text-gray-300 leading-7">
                     {isLocked 
                         ? "Звезды сложились в редкую конфигурацию. Ваше имя звучит в чертогах судьбы..." 
@@ -168,22 +169,28 @@ const Dashboard: React.FC<DashboardProps> = ({
                  </p>
             </div>
 
+            {/* TEASER PAYWALL */}
             {isLocked && (
-                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[2px]">
-                    <div className="w-12 h-12 bg-gold/10 rounded-full flex items-center justify-center mb-3 animate-pulse border border-gold/50">
-                        <svg className="w-6 h-6 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/70 backdrop-blur-[4px]">
+                    
+                    {/* The Hook: Showing the "Topic" but hiding the details */}
+                    <div className="mb-4 px-4 py-1 bg-red-900/30 border border-red-500/30 rounded-full animate-pulse">
+                         <span className="text-red-400 font-cinzel text-xs font-bold tracking-wide uppercase">
+                            {prediction.teaser || "⚠️ Важное Послание"}
+                         </span>
                     </div>
+
                     <button 
                         onClick={onUnlockPremium}
-                        className="bg-gradient-to-r from-gold to-[#B8860B] text-black font-cinzel font-bold text-xs py-3 px-8 rounded-full shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:scale-105 transition-transform active:scale-95"
+                        className="bg-gradient-to-r from-gold to-[#B8860B] text-black font-cinzel font-bold text-xs py-3 px-8 rounded-full shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:scale-105 transition-transform active:scale-95 flex items-center gap-2"
                     >
-                        Снять Печать (199₽)
+                        <span>Снять Печать</span>
+                        <span className="bg-black/20 px-1.5 rounded text-[10px]">199₽</span>
                     </button>
+                    
                     <button 
                         onClick={onUnlockDaily}
-                        className="mt-3 text-[10px] text-gray-400 underline decoration-gray-600 underline-offset-2"
+                        className="mt-4 text-[10px] text-gray-400 underline decoration-gray-600 underline-offset-2 hover:text-white transition-colors"
                     >
                         Открыть за подписку
                     </button>
