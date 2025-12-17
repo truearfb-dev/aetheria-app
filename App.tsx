@@ -157,8 +157,10 @@ const App: React.FC = () => {
     }
   };
 
+  // Logic: Block immediately if not premium and not unlocked today.
+  // We removed 'userData.visitCount > 3' to force the paywall from Day 1.
   const isLocked = userData 
-    ? !userData.isPremium && userData.visitCount > 3 && !userData.isUnlockedToday 
+    ? !userData.isPremium && !userData.isUnlockedToday 
     : false;
 
   return (

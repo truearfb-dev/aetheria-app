@@ -159,8 +159,8 @@ const Dashboard: React.FC<DashboardProps> = ({
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20"></div>
             <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl"></div>
             
-            {/* Locked Content */}
-            <div className={`relative p-6 h-full flex flex-col items-center justify-center transition-all duration-700 ${isLocked ? 'blur-sm opacity-60' : 'opacity-100'}`}>
+            {/* Locked Content - Now using blur-md */}
+            <div className={`relative p-6 h-full flex flex-col items-center justify-center transition-all duration-700 ${isLocked ? 'blur-md opacity-60' : 'opacity-100'}`}>
                  <p className="font-cinzel text-center text-gray-300 leading-7">
                     {isLocked 
                         ? "Звезды сложились в редкую конфигурацию. Ваше имя звучит в чертогах судьбы..." 
