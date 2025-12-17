@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { UserProfile, DailyPrediction } from '../types';
 import Paywall from './Paywall';
 import { getTelegramWebApp, triggerHaptic, triggerNotification } from '../services/telegram';
@@ -21,30 +21,38 @@ const Dashboard: React.FC<DashboardProps> = ({
     onUnlockPremium, onUnlockDaily, onConsumeToken, onBuyTokens, onReset 
 }) => {
   const tg = getTelegramWebApp();
-  const [oracleOpen, setOracleOpen] = useState(false);
   const [oracleQuestion, setOracleQuestion] = useState('');
   const [oracleAnswer, setOracleAnswer] = useState<string | null>(null);
   const [isConsulting, setIsConsulting] = useState(false);
+  
+  // State for the "Not Enough Tokens" modal
+  const [showTokenModal, setShowTokenModal] = useState(false);
+
+  // Focus ref for input
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleShare = () => {
     triggerHaptic('medium');
-    const text = `✨ ЭТЕРИЯ: Моя карта дня — ${prediction.tarotCard.name}.\n🔮 Знак: ${user.zodiacSign}\n\nУзнай, что звезды говорят о тебе:`;
+    const text = `🔮 Этерия: Моя карта дня — ${prediction.tarotCard.name}. Звезды шепчут...`;
     const url = "https://t.me/AetheriaBot/app"; 
     
     if (tg) {
         tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
-    } else {
-        alert("Поделиться можно только в Telegram.");
     }
   };
 
   const handleOracleConsult = async () => {
-    if (!oracleQuestion.trim()) return;
+    if (!oracleQuestion.trim()) {
+        inputRef.current?.focus();
+        return;
+    }
 
-    // Check balance
+    // --- FUNNEL LOGIC ---
+    // User has already typed the question (committed effort).
+    // Now we check balance. If 0, we show the upsell.
     if (oracleTokens <= 0) {
         triggerNotification('warning');
-        onBuyTokens();
+        setShowTokenModal(true); // Show custom modal instead of direct buy
         return;
     }
 
@@ -54,180 +62,206 @@ const Dashboard: React.FC<DashboardProps> = ({
     triggerHaptic('heavy');
     setIsConsulting(true);
     setOracleAnswer(null);
+    
+    // AI Call
     const answer = await askTheOracle(oracleQuestion, user.zodiacSign, user.name);
+    
     triggerNotification('success');
     setOracleAnswer(answer);
     setIsConsulting(false);
   };
 
-  const toggleOracle = () => {
-      triggerHaptic('light');
-      setOracleOpen(!oracleOpen);
-  }
-
   return (
-    <div className="relative z-10 p-6 max-w-lg mx-auto pb-24 animate-fadeIn">
-      {/* Header */}
-      <header className="flex justify-between items-center mb-6 border-b border-white/10 pb-4">
+    <div className="relative z-10 p-5 max-w-lg mx-auto pb-32 animate-fadeIn">
+      
+      {/* 1. COMPACT HEADER */}
+      <header className="flex justify-between items-end mb-6 border-b border-white/5 pb-2">
         <div>
-            <h1 className="text-2xl font-cinzel text-white">Привет, {user.name}</h1>
-            <p className="text-xs text-gold uppercase tracking-widest">{new Date().toLocaleDateString('ru-RU')}</p>
+            <h1 className="text-xl font-cinzel text-white">Этерия</h1>
+            <p className="text-[10px] text-gray-400 font-lato">{user.name} | {user.zodiacSign}</p>
         </div>
-        <div className="flex flex-col items-center">
-            <span className="text-2xl text-gold">{getZodiacIcon(user.zodiacSign)}</span>
-            <span className="text-[10px] uppercase text-gray-400">{user.zodiacSign}</span>
+        <div className="flex items-center gap-2 bg-white/5 px-3 py-1 rounded-full border border-white/10" onClick={() => setShowTokenModal(true)}>
+            <span className="text-xs font-bold text-neon">{oracleTokens}</span>
+            <span className="text-[10px] uppercase text-gray-400">🔮 Энергии</span>
+            <span className="w-4 h-4 rounded-full bg-neon/20 flex items-center justify-center text-[10px] text-neon">+</span>
         </div>
       </header>
 
-      {/* Tarot Card of the Day */}
-      <section className="mb-8 flex flex-col items-center" onClick={() => triggerHaptic('light')}>
-        <h2 className="font-cinzel text-gray-400 text-xs tracking-[0.2em] mb-4 uppercase">Карта Дня</h2>
-        <div className="w-48 h-72 bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] rounded-xl border border-gold/30 shadow-[0_0_30px_rgba(212,175,55,0.1)] flex flex-col items-center justify-center p-4 relative group hover:border-gold/60 transition-all duration-500 transform active:scale-95">
-            <div className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-500 filter drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
-                {prediction.tarotCard.icon}
+      {/* 2. TAROT HOOK (Visual, minimal text) */}
+      <section className="mb-8 flex justify-center perspective-1000" onClick={() => triggerHaptic('light')}>
+        <div className="relative w-full max-w-[200px] aspect-[2/3] group">
+            <div className="absolute inset-0 bg-gold/20 rounded-xl blur-xl group-hover:blur-2xl transition-all duration-700"></div>
+            <div className="relative h-full bg-gradient-to-b from-[#1a1a1a] to-black rounded-xl border border-gold/40 flex flex-col items-center justify-between p-4 shadow-2xl overflow-hidden">
+                 {/* Card Content */}
+                <div className="text-xs text-gold/60 uppercase tracking-widest font-cinzel mt-2">Карта Дня</div>
+                <div className="text-7xl drop-shadow-[0_0_15px_rgba(255,255,255,0.3)] animate-float">
+                    {prediction.tarotCard.icon}
+                </div>
+                <div className="text-center pb-2">
+                    <h3 className="text-gold font-cinzel text-lg leading-tight">{prediction.tarotCard.name}</h3>
+                    {/* We purposely hide the full meaning to encourage Premium if you wanted, but for now we keep it free as a "treat" */}
+                </div>
             </div>
-            <h3 className="text-gold font-cinzel text-lg text-center mb-2">{prediction.tarotCard.name}</h3>
-            <p className="text-gray-400 text-xs text-center font-lato italic opacity-80">{prediction.tarotCard.meaning}</p>
-            
-            {/* Decorative corners */}
-            <div className="absolute top-2 left-2 w-2 h-2 border-t border-l border-gold/50"></div>
-            <div className="absolute top-2 right-2 w-2 h-2 border-t border-r border-gold/50"></div>
-            <div className="absolute bottom-2 left-2 w-2 h-2 border-b border-l border-gold/50"></div>
-            <div className="absolute bottom-2 right-2 w-2 h-2 border-b border-r border-gold/50"></div>
         </div>
       </section>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <StatCircle label="Карма" value={prediction.karma} color="#B026FF" />
-        <StatCircle label="Удача" value={prediction.luck} color="#D4AF37" />
-        <StatCircle label="Любовь" value={prediction.love} color="#FF69B4" />
-      </div>
+      {/* 3. ORACLE FUNNEL (The Main Action) */}
+      <section className="mb-8 relative">
+          <div className="absolute -inset-1 bg-gradient-to-r from-neon via-purple-500 to-neon opacity-20 blur-md rounded-2xl"></div>
+          <div className="relative bg-[#0F0518]/90 border border-neon/30 rounded-2xl p-5 backdrop-blur-xl">
+              
+              <div className="flex items-center gap-2 mb-3">
+                  <span className="text-xl">👁️</span>
+                  <h3 className="font-cinzel text-white text-sm tracking-wide">Спроси Звезды</h3>
+              </div>
 
-      {/* Main Prediction Card (Locked/Unlocked) */}
-      <section className="relative mb-6 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md overflow-hidden min-h-[150px] flex items-center justify-center">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-1 bg-gold shadow-[0_0_20px_#D4AF37]"></div>
-        
-        <div className={`relative transition-all duration-700 w-full ${isLocked ? 'blur-md opacity-50 select-none' : 'opacity-100'}`}>
-             {/* If prediction.text starts with default value, it means AI failed or loading, but we show it anyway */}
-            <p className="font-lato text-gray-200 leading-relaxed text-center italic text-sm">
-                "{prediction.text}"
-            </p>
-        </div>
-        {isLocked && (
-            <Paywall 
-                onUnlockPremium={onUnlockPremium} 
-                onUnlockDaily={onUnlockDaily} 
-            />
-        )}
-      </section>
-
-      {/* Lucky Color */}
-      <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/10 mb-8">
-        <span className="font-cinzel text-sm text-gray-300">Цвет Дня</span>
-        <div className="flex items-center gap-3">
-            <span className="font-lato text-xs uppercase tracking-wide">{prediction.luckyColor}</span>
-            <div 
-                className="w-8 h-8 rounded-full shadow-inner border border-white/20" 
-                style={{ backgroundColor: prediction.luckyColorHex }}
-            ></div>
-        </div>
-      </div>
-
-      {/* Oracle Feature */}
-      <section className="mb-8">
-          <button 
-            onClick={toggleOracle}
-            className="w-full py-3 border border-neon/50 bg-neon/5 rounded-xl text-neon font-cinzel text-sm uppercase tracking-widest hover:bg-neon/10 transition-colors active:scale-95 duration-200"
-          >
-              {oracleOpen ? "Закрыть Глаз" : `Спросить Оракула (${oracleTokens} 🔮)`}
-          </button>
-          
-          {oracleOpen && (
-              <div className="mt-4 p-4 rounded-xl bg-black/40 border border-neon/30 animate-float">
-                  {!oracleAnswer ? (
-                      <>
-                        <div className="flex justify-between items-center mb-2">
-                             <span className="text-[10px] text-gray-400 uppercase">Баланс: {oracleTokens} вопросов</span>
-                             <button onClick={onBuyTokens} className="text-[10px] text-gold underline">Пополнить (99₽)</button>
-                        </div>
-                        <input 
-                            type="text" 
-                            placeholder="Что ты ищешь?" 
-                            className="w-full bg-transparent border-b border-white/20 p-2 text-white font-lato focus:outline-none focus:border-neon mb-4"
-                            value={oracleQuestion}
-                            onChange={(e) => setOracleQuestion(e.target.value)}
-                        />
-                        <button 
-                            disabled={isConsulting || !oracleQuestion}
-                            onClick={handleOracleConsult}
-                            className="w-full bg-neon text-white font-cinzel text-xs py-2 rounded disabled:opacity-50 active:scale-95 transition-transform"
-                        >
-                            {isConsulting ? "Вопрошаю..." : oracleTokens > 0 ? "Узнать (1 🔮)" : "Купить Энергию"}
-                        </button>
-                      </>
-                  ) : (
-                      <div className="text-center">
-                          <p className="font-cinzel text-neon mb-2 text-sm">Оракул говорит:</p>
-                          <p className="font-lato text-sm text-gray-300">{oracleAnswer}</p>
+              {!oracleAnswer ? (
+                  <div className="space-y-3">
+                      <p className="text-[11px] text-gray-400 font-lato leading-relaxed">
+                          Задайте вопрос, который тревожит ваше сердце. ИИ-Оракул настроится на вашу астральную карту.
+                      </p>
+                      <div className="relative">
+                          <input 
+                              ref={inputRef}
+                              type="text" 
+                              placeholder="Например: Встречу ли я любовь?" 
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-neon focus:ring-1 focus:ring-neon focus:outline-none transition-all placeholder:text-gray-600 font-lato"
+                              value={oracleQuestion}
+                              onChange={(e) => setOracleQuestion(e.target.value)}
+                          />
                           <button 
-                            onClick={() => { triggerHaptic('light'); setOracleAnswer(null); setOracleQuestion(''); }}
-                            className="mt-4 text-xs text-gray-500 hover:text-white"
+                            onClick={handleOracleConsult}
+                            disabled={isConsulting}
+                            className="absolute right-1 top-1 bottom-1 bg-neon hover:bg-neon/80 text-white rounded-lg px-4 font-cinzel text-xs uppercase tracking-wider transition-all disabled:opacity-50 disabled:grayscale"
                           >
-                              Спросить еще
+                             {isConsulting ? "..." : "↗"}
                           </button>
                       </div>
-                  )}
-              </div>
-          )}
+                  </div>
+              ) : (
+                  <div className="animate-fadeIn">
+                      <div className="mb-4 p-3 bg-neon/5 rounded-lg border border-neon/10">
+                          <p className="font-lato text-sm text-gray-200 italic leading-relaxed">"{oracleAnswer}"</p>
+                      </div>
+                      <button 
+                        onClick={() => { triggerHaptic('light'); setOracleAnswer(null); setOracleQuestion(''); }}
+                        className="w-full py-2 text-xs text-neon border border-neon/30 rounded-lg hover:bg-neon/10 transition-colors uppercase font-cinzel"
+                      >
+                          Спросить еще раз
+                      </button>
+                  </div>
+              )}
+          </div>
       </section>
 
-      {/* Footer Actions */}
-      <div className="flex flex-col gap-4">
-        <button 
-            onClick={handleShare}
-            className="w-full bg-white/10 hover:bg-white/20 text-white font-cinzel py-4 rounded-xl border border-white/20 transition-all uppercase tracking-widest text-sm active:scale-95"
-        >
-            Поделиться Судьбой
-        </button>
+      {/* 4. THE SEALED SCROLL (Premium Hook) */}
+      <section className="mb-8">
+        <h2 className="font-cinzel text-center text-gray-500 text-xs tracking-[0.3em] mb-4 uppercase">Личное Пророчество</h2>
+        
+        <div className="relative min-h-[160px] rounded-2xl overflow-hidden group">
+            {/* Background Image/Effect */}
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20"></div>
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl"></div>
+            
+            {/* The "Content" (Blurred or Visible) */}
+            <div className={`relative p-6 h-full flex items-center justify-center transition-all duration-700 ${isLocked ? 'blur-sm opacity-60' : 'opacity-100'}`}>
+                 <p className="font-cinzel text-center text-gray-300 leading-7">
+                    {isLocked 
+                        ? "Звезды сложились в редкую конфигурацию. Ваше имя звучит в чертогах судьбы..." 
+                        : `"${prediction.text}"`
+                    }
+                 </p>
+            </div>
 
-        <button 
-            onClick={onReset}
-            className="text-xs text-gray-600 hover:text-red-500 mt-4 transition-colors font-lato"
-        >
-            [Сбросить данные]
-        </button>
+            {/* The Paywall Overlay (If Locked) */}
+            {isLocked && (
+                <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[2px]">
+                    <div className="w-12 h-12 bg-gold/10 rounded-full flex items-center justify-center mb-3 animate-pulse border border-gold/50">
+                        <svg className="w-6 h-6 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                        </svg>
+                    </div>
+                    <button 
+                        onClick={onUnlockPremium}
+                        className="bg-gradient-to-r from-gold to-[#B8860B] text-black font-cinzel font-bold text-xs py-3 px-8 rounded-full shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:scale-105 transition-transform active:scale-95"
+                    >
+                        Снять Печать (199₽)
+                    </button>
+                    <button 
+                        onClick={onUnlockDaily}
+                        className="mt-3 text-[10px] text-gray-400 underline decoration-gray-600 underline-offset-2"
+                    >
+                        Открыть за подписку
+                    </button>
+                </div>
+            )}
+        </div>
+      </section>
+
+      {/* 5. STATS (Secondary Content) */}
+      <div className="grid grid-cols-3 gap-3 mb-8 opacity-80">
+        <StatBar label="Карма" value={prediction.karma} color="bg-purple-500" />
+        <StatBar label="Удача" value={prediction.luck} color="bg-gold" />
+        <StatBar label="Любовь" value={prediction.love} color="bg-pink-500" />
       </div>
+
+      {/* 6. FOOTER */}
+      <button onClick={onReset} className="w-full text-center text-[10px] text-gray-700 uppercase tracking-widest hover:text-red-900 transition-colors">
+          Начать новую жизнь (Сброс)
+      </button>
+
+      {/* --- MODALS --- */}
+
+      {/* Token Shop Modal */}
+      {showTokenModal && (
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm animate-fadeIn" onClick={() => setShowTokenModal(false)}>
+              <div className="w-full max-w-sm bg-[#121212] border-t sm:border border-white/10 rounded-t-2xl sm:rounded-2xl p-6 pb-10 sm:pb-6 transform transition-transform" onClick={e => e.stopPropagation()}>
+                  <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-xl font-cinzel text-neon">Недостаточно Энергии</h3>
+                      <button onClick={() => setShowTokenModal(false)} className="text-gray-500 text-xl">×</button>
+                  </div>
+                  <p className="text-gray-400 text-sm font-lato mb-6">
+                      Оракул требует подношения для связи с астралом. Ваш вопрос сохранен, но для ответа нужна энергия.
+                  </p>
+                  
+                  <div className="space-y-3">
+                      <button 
+                        onClick={() => { onBuyTokens(); setShowTokenModal(false); }}
+                        className="w-full bg-neon hover:bg-neon/80 text-white font-cinzel py-4 rounded-xl shadow-[0_0_20px_rgba(176,38,255,0.3)] flex items-center justify-between px-6 active:scale-95 transition-transform"
+                      >
+                          <span className="flex flex-col items-start">
+                              <span className="text-sm font-bold">5 Ответов Оракула</span>
+                              <span className="text-[10px] opacity-70">Самый популярный выбор</span>
+                          </span>
+                          <span className="text-lg font-bold">99₽</span>
+                      </button>
+                      
+                      <button 
+                        onClick={() => setShowTokenModal(false)}
+                        className="w-full py-3 text-gray-500 text-xs font-lato"
+                      >
+                          Я спрошу позже...
+                      </button>
+                  </div>
+              </div>
+          </div>
+      )}
 
     </div>
   );
 };
 
-const StatCircle: React.FC<{ label: string; value: number; color: string }> = ({ label, value, color }) => (
-    <div className="flex flex-col items-center">
-        <div className="relative w-14 h-14 flex items-center justify-center rounded-full border-2 border-white/10 bg-black/20 mb-2">
-            <svg className="absolute inset-0 w-full h-full -rotate-90">
-                <circle 
-                    cx="28" cy="28" r="24" 
-                    fill="none" stroke={color} strokeWidth="2" 
-                    strokeDasharray={`${(value / 100) * 150}, 150`}
-                    strokeLinecap="round"
-                    className="opacity-80 drop-shadow-[0_0_8px_rgba(255,255,255,0.3)] transition-all duration-1000 ease-out"
-                />
-            </svg>
-            <span className="font-lato font-bold text-xs text-white">{value}%</span>
+// Simple Stat Bar Component
+const StatBar: React.FC<{ label: string; value: number; color: string }> = ({ label, value, color }) => (
+    <div className="bg-white/5 rounded-lg p-3 border border-white/5 flex flex-col gap-2">
+        <div className="flex justify-between items-center">
+            <span className="text-[10px] uppercase text-gray-400 font-cinzel">{label}</span>
+            <span className="text-xs font-bold text-white">{value}%</span>
         </div>
-        <span className="font-cinzel text-[9px] uppercase text-gray-400">{label}</span>
+        <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+            <div className={`h-full ${color} shadow-[0_0_10px_currentColor]`} style={{ width: `${value}%`, transition: 'width 1s ease-out' }}></div>
+        </div>
     </div>
 );
-
-const getZodiacIcon = (sign: string) => {
-    const icons: Record<string, string> = {
-        "Овен": "♈", "Телец": "♉", "Близнецы": "♊", "Рак": "♋",
-        "Лев": "♌", "Дева": "♍", "Весы": "♎", "Скорпион": "♏",
-        "Стрелец": "♐", "Козерог": "♑", "Водолей": "♒", "Рыбы": "♓"
-    };
-    return icons[sign] || "✨";
-};
 
 export default Dashboard;
