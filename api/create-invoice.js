@@ -22,39 +22,43 @@ export default async function handler(req, res) {
     }
 
     // Проверка формата токена (Токены платежей Telegram обычно содержат двоеточия, например 123:TEST:abc)
-    // Ключи ЮКассы (test_...) двоеточий не содержат.
     if (!PROVIDER_TOKEN.includes(':') && PROVIDER_TOKEN.startsWith('test_')) {
        console.error("CONFIGURATION ERROR: Похоже, вы вставили Secret Key от ЮКассы прямо в Vercel.");
-       console.error("Нужно сначала подключить ЮКассу в @BotFather, получить от него токен (вида 123:TEST:...) и вставить в Vercel ЕГО.");
        return res.status(500).json({ error: 'Invalid PROVIDER_TOKEN format. Check Vercel logs.' });
     }
 
-    // Настройка товара
+    // --- НАСТРОЙКА ЦЕН (В КОПЕЙКАХ) ---
+    // ВАЖНО: Telegram требует минимальную сумму около $1 (примерно 90-100 рублей).
+    // Если сумма меньше, API вернет ошибку CURRENCY_TOTAL_AMOUNT_INVALID.
+    
     let title = "Этерия Premium";
     let description = "Пожизненный доступ к гороскопам";
-    let amount = 14900; // Цена в копейках (149.00 RUB)
+    // Ставим 199 рублей (безопасная сумма выше $2)
+    let amount = 19900; 
 
     if (product === 'tokens_pack_small') {
       title = "5 Ответов Оракула";
       description = "Энергия для общения с ИИ";
-      amount = 5900; // 59.00 RUB
+      // Ставим 99 рублей (безопасная сумма около $1)
+      amount = 9900; 
     }
 
     // Формируем запрос к Telegram API
     const payload = {
       title: title,
       description: description,
-      payload: product, // Скрытые данные, чтобы мы поняли, что купили
+      payload: product, // Скрытые данные
       provider_token: PROVIDER_TOKEN,
       currency: 'RUB',
       prices: [{ label: title, amount: amount }],
-      // Отключаем запрос лишних данных от пользователя
       need_name: false,
       need_phone_number: false,
       need_email: false,
       need_shipping_address: false,
       is_flexible: false
     };
+
+    console.log("Sending Invoice Payload:", JSON.stringify(payload));
 
     // Отправляем запрос в Telegram
     const telegramApiUrl = `https://api.telegram.org/bot${BOT_TOKEN}/createInvoiceLink`;

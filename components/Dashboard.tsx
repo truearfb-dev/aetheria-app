@@ -149,7 +149,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                       <>
                         <div className="flex justify-between items-center mb-2">
                              <span className="text-[10px] text-gray-400 uppercase">Баланс: {oracleTokens} вопросов</span>
-                             <button onClick={onBuyTokens} className="text-[10px] text-gold underline">Пополнить (59₽)</button>
+                             <button onClick={onBuyTokens} className="text-[10px] text-gold underline">Пополнить (99₽)</button>
                         </div>
                         <input 
                             type="text" 

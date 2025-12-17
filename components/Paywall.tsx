@@ -59,7 +59,7 @@ const Paywall: React.FC<PaywallProps> = ({ onUnlockPremium, onUnlockDaily }) => 
             onClick={onUnlockPremium}
             className="w-full bg-gradient-to-r from-gold to-yellow-600 text-black font-cinzel text-sm font-bold py-3.5 rounded-lg shadow-[0_0_20px_rgba(212,175,55,0.4)] hover:shadow-[0_0_30px_rgba(212,175,55,0.6)] transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
           >
-            <span>👑 Premium (149₽)</span>
+            <span>👑 Premium (199₽)</span>
           </button>
           
           <p className="text-[10px] text-gray-600 mt-2">
