@@ -1,31 +1,75 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, HarmCategory, HarmBlockThreshold } from "@google/genai";
 
-// Initialize Gemini
-// Note: per guidelines, we assume process.env.API_KEY is valid and accessible.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// --- Fallback Data (Offline Mode) ---
+const FALLBACK_ANSWERS = [
+    "Туман скрывает ответ. Но сердце знает правду — да.",
+    "Звезды говорят: сейчас не время. Подождите знака.",
+    "Путь открыт. Смело идите вперед.",
+    "Остерегайтесь иллюзий. Все не так, как кажется.",
+    "Ответ кроется в вашем прошлом. Вспомните уроки.",
+    "Силы вселенной на вашей стороне. Действуйте.",
+    "Тишина — тоже ответ. Подумайте еще раз."
+];
+
+// --- Initialization ---
+
+let ai: GoogleGenAI | null = null;
+
+// Безопасная инициализация
+if (process.env.API_KEY) {
+    try {
+        ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+    } catch (e) {
+        console.warn("Gemini Client Init Failed:", e);
+    }
+} else {
+    console.warn("⚠️ API_KEY is missing. App is running in Offline/Fallback Mode.");
+}
 
 export const askTheOracle = async (
   userQuestion: string, 
   zodiac: string, 
   name: string
 ): Promise<string> => {
+  // 1. Проверка наличия ключа (для диагностики)
+  if (!ai) {
+      // Искусственная задержка
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      return "⚠️ Оракул не слышит вас. (Проверьте, добавлен ли API_KEY в настройки Vercel)";
+  }
+
   try {
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
-      contents: `You are a mystical Oracle. 
-      The user ${name} (Zodiac sign in Russian: ${zodiac}) asks: "${userQuestion}". 
-      Provide a cryptic, mystical, yet helpful answer in Russian.
-      Keep it under 50 words.
-      Use a tone that is ancient, respectful, and slightly dark but encouraging.`,
+      contents: userQuestion, // Вопрос пользователя
       config: {
-        thinkingConfig: { thinkingBudget: 0 } // Flash model
+        // Системная инструкция задает роль
+        systemInstruction: `You are a mystical Oracle of Aetheria. 
+        The user ${name} (Zodiac: ${zodiac}) asks you a question.
+        Answer in Russian.
+        Your tone is ancient, mysterious, slightly dark, but ultimately helpful.
+        IMPORTANT: You MUST answer the question directly. Do not say "connection is weak" or refuse to answer.
+        If the question is unclear, interpret the omens freely.
+        Keep answer under 40 words.`,
+        
+        // Отключаем лишние "раздумья" для скорости
+        thinkingConfig: { thinkingBudget: 0 },
+        
+        // Отключаем фильтры безопасности, чтобы ИИ не боялся "магии" и "судьбы"
+        safetySettings: [
+            { category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE },
+            { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+        ]
       }
     });
 
-    return response.text || "Звезды молчат по этому поводу.";
+    return response.text || FALLBACK_ANSWERS[0];
   } catch (error) {
-    console.error("Oracle Error:", error);
-    return "Связь с астральным планом слаба. Попробуйте позже.";
+    console.error("Oracle API Error:", error);
+    // Если ошибка API - возвращаем случайный ответ из запаса
+    return FALLBACK_ANSWERS[Math.floor(Math.random() * FALLBACK_ANSWERS.length)];
   }
 };
 
@@ -33,23 +77,28 @@ export const generateDailyHoroscope = async (
     zodiac: string,
     name: string
 ): Promise<string> => {
+    // Если ключа нет - вернем пустоту, компонент сам подставит дефолт
+    if (!ai) return "";
+
     try {
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',
-            contents: `Generate a daily horoscope for ${name} (Zodiac: ${zodiac}).
-            Language: Russian.
-            Tone: Mystical, immersive, slightly esoteric but grounded in advice.
-            Structure: One profound paragraph (approx 30-40 words).
-            Focus: Personal growth and hidden opportunities.
-            Do NOT use standard greetings. Start immediately with the prophecy.`,
+            contents: `Generate a daily horoscope for ${name} (Zodiac: ${zodiac}).`,
             config: {
-                thinkingConfig: { thinkingBudget: 0 }
+                systemInstruction: `You are an astrologer. Generate a mystical daily horoscope in Russian.
+                Tone: Esoteric, immersive, profound.
+                Length: One short paragraph (30 words max).
+                Focus: Hidden opportunities and warnings.
+                Do NOT use greetings.`,
+                thinkingConfig: { thinkingBudget: 0 },
+                 safetySettings: [
+                    { category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE },
+                ]
             }
         });
-        return response.text || "Туман скрывает грядущее. Прислушайся к интуиции.";
+        return response.text || "";
     } catch (error) {
-        console.error("Horoscope Error:", error);
-        // Fallback text is handled by the caller or UI
+        console.error("Horoscope API Error:", error);
         return "";
     }
 };

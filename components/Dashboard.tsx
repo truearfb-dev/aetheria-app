@@ -48,11 +48,9 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
 
     // --- FUNNEL LOGIC ---
-    // User has already typed the question (committed effort).
-    // Now we check balance. If 0, we show the upsell.
     if (oracleTokens <= 0) {
         triggerNotification('warning');
-        setShowTokenModal(true); // Show custom modal instead of direct buy
+        setShowTokenModal(true); // Show custom modal
         return;
     }
 
@@ -87,7 +85,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </header>
 
-      {/* 2. TAROT HOOK (Visual, minimal text) */}
+      {/* 2. TAROT HOOK */}
       <section className="mb-8 flex justify-center perspective-1000" onClick={() => triggerHaptic('light')}>
         <div className="relative w-full max-w-[200px] aspect-[2/3] group">
             <div className="absolute inset-0 bg-gold/20 rounded-xl blur-xl group-hover:blur-2xl transition-all duration-700"></div>
@@ -99,13 +97,12 @@ const Dashboard: React.FC<DashboardProps> = ({
                 </div>
                 <div className="text-center pb-2">
                     <h3 className="text-gold font-cinzel text-lg leading-tight">{prediction.tarotCard.name}</h3>
-                    {/* We purposely hide the full meaning to encourage Premium if you wanted, but for now we keep it free as a "treat" */}
                 </div>
             </div>
         </div>
       </section>
 
-      {/* 3. ORACLE FUNNEL (The Main Action) */}
+      {/* 3. ORACLE FUNNEL */}
       <section className="mb-8 relative">
           <div className="absolute -inset-1 bg-gradient-to-r from-neon via-purple-500 to-neon opacity-20 blur-md rounded-2xl"></div>
           <div className="relative bg-[#0F0518]/90 border border-neon/30 rounded-2xl p-5 backdrop-blur-xl">
@@ -125,7 +122,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                               ref={inputRef}
                               type="text" 
                               placeholder="Например: Встречу ли я любовь?" 
-                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-neon focus:ring-1 focus:ring-neon focus:outline-none transition-all placeholder:text-gray-600 font-lato"
+                              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-sm text-white focus:border-neon focus:ring-1 focus:ring-neon focus:outline-none transition-all placeholder:text-gray-500 font-lato"
                               value={oracleQuestion}
                               onChange={(e) => setOracleQuestion(e.target.value)}
                           />
@@ -140,8 +137,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </div>
               ) : (
                   <div className="animate-fadeIn">
-                      <div className="mb-4 p-3 bg-neon/5 rounded-lg border border-neon/10">
-                          <p className="font-lato text-sm text-gray-200 italic leading-relaxed">"{oracleAnswer}"</p>
+                      <div className="mb-4 p-4 bg-gradient-to-br from-neon/10 to-transparent rounded-lg border border-neon/30 shadow-[0_0_15px_rgba(176,38,255,0.1)]">
+                          <p className="font-lato text-sm text-white italic leading-relaxed drop-shadow-sm">"{oracleAnswer}"</p>
                       </div>
                       <button 
                         onClick={() => { triggerHaptic('light'); setOracleAnswer(null); setOracleQuestion(''); }}
@@ -154,16 +151,14 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
       </section>
 
-      {/* 4. THE SEALED SCROLL (Premium Hook) */}
+      {/* 4. THE SEALED SCROLL */}
       <section className="mb-8">
         <h2 className="font-cinzel text-center text-gray-500 text-xs tracking-[0.3em] mb-4 uppercase">Личное Пророчество</h2>
         
         <div className="relative min-h-[160px] rounded-2xl overflow-hidden group">
-            {/* Background Image/Effect */}
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20"></div>
             <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-2xl"></div>
             
-            {/* The "Content" (Blurred or Visible) */}
             <div className={`relative p-6 h-full flex items-center justify-center transition-all duration-700 ${isLocked ? 'blur-sm opacity-60' : 'opacity-100'}`}>
                  <p className="font-cinzel text-center text-gray-300 leading-7">
                     {isLocked 
@@ -173,7 +168,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                  </p>
             </div>
 
-            {/* The Paywall Overlay (If Locked) */}
             {isLocked && (
                 <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60 backdrop-blur-[2px]">
                     <div className="w-12 h-12 bg-gold/10 rounded-full flex items-center justify-center mb-3 animate-pulse border border-gold/50">
@@ -198,7 +192,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </section>
 
-      {/* 5. STATS (Secondary Content) */}
+      {/* 5. STATS */}
       <div className="grid grid-cols-3 gap-3 mb-8 opacity-80">
         <StatBar label="Карма" value={prediction.karma} color="bg-purple-500" />
         <StatBar label="Удача" value={prediction.luck} color="bg-gold" />
@@ -211,8 +205,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       </button>
 
       {/* --- MODALS --- */}
-
-      {/* Token Shop Modal */}
       {showTokenModal && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm animate-fadeIn" onClick={() => setShowTokenModal(false)}>
               <div className="w-full max-w-sm bg-[#121212] border-t sm:border border-white/10 rounded-t-2xl sm:rounded-2xl p-6 pb-10 sm:pb-6 transform transition-transform" onClick={e => e.stopPropagation()}>
