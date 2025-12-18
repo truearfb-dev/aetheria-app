@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, DailyPrediction } from '../types';
 import { triggerHaptic, triggerNotification, getTelegramWebApp } from '../services/telegram';
 
-const CHANNEL_URL = "https://t.me/durov"; 
-const CHANNEL_ID = "@durov"; 
+const CHANNEL_URL = "https://t.me/+agv13DXReBY1MzYy"; 
+const CHANNEL_ID = "-1003373710045"; 
 
 interface DashboardProps {
   user: UserProfile;
