@@ -62,38 +62,46 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
     }
   };
 
+  // Shared classes for both inputs to ensure identical size
+  const inputBaseClass = "w-full h-12 bg-black/40 border border-white/10 rounded-lg px-4 text-white text-center focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold transition-all font-lato text-sm uppercase tracking-wider appearance-none";
+
   return (
     <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-6 text-center animate-fadeIn">
       <h1 className="text-4xl font-cinzel text-gold mb-2 tracking-widest drop-shadow-lg">ЭТЕРИЯ</h1>
       <p className="text-gray-400 font-lato mb-8 tracking-wide uppercase text-xs">Начни свой путь</p>
 
       <div className="w-full max-w-sm backdrop-blur-md bg-white/5 border border-white/10 p-8 rounded-2xl shadow-2xl transition-all duration-500">
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="text-center">
-            <label className="block text-xs uppercase tracking-[0.2em] text-gold mb-3 font-cinzel">Ваше Имя</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white text-center focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold transition-all font-lato text-sm uppercase tracking-wider"
-              placeholder="Введите имя"
-            />
+        <form onSubmit={handleSubmit} className="space-y-8">
+          
+          <div className="flex flex-col items-center">
+            <label className="text-xs uppercase tracking-[0.2em] text-gold mb-3 font-cinzel w-full text-center">Ваше Имя</label>
+            <div className="w-full max-w-[280px]">
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={inputBaseClass}
+                placeholder="ИМЯ"
+              />
+            </div>
           </div>
 
-          <div className="text-center">
-            <label className="block text-xs uppercase tracking-[0.2em] text-gold mb-3 font-cinzel">Дата Рождения</label>
-            <input
-              type="date"
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white text-center focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold transition-all font-lato text-sm uppercase tracking-wider"
-              style={{ colorScheme: 'dark' }}
-            />
+          <div className="flex flex-col items-center">
+            <label className="text-xs uppercase tracking-[0.2em] text-gold mb-3 font-cinzel w-full text-center">Дата Рождения</label>
+            <div className="w-full max-w-[280px]">
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                className={inputBaseClass}
+                style={{ colorScheme: 'dark' }}
+              />
+            </div>
           </div>
 
           {/* Instant Validation Hook */}
           <div className={`overflow-hidden transition-all duration-500 ease-in-out ${zodiac ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="bg-gold/10 border border-gold/30 rounded-lg p-3 flex items-center justify-center gap-3 mt-2">
+              <div className="bg-gold/10 border border-gold/30 rounded-lg p-3 flex items-center justify-center gap-3 mt-4">
                   <span className="text-2xl animate-pulse">✨</span>
                   <div className="text-left">
                       <p className="text-gold font-cinzel text-sm">Вы — {zodiac}</p>
@@ -105,7 +113,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           <button
             type="submit"
             disabled={!name || !date}
-            className="w-full mt-6 bg-gold/10 hover:bg-gold/20 text-gold border border-gold/50 font-cinzel py-3.5 rounded-lg uppercase tracking-[0.2em] text-xs transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(212,175,55,0.1)] hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] active:scale-95"
+            className="w-full mt-4 bg-gold/10 hover:bg-gold/20 text-gold border border-gold/50 font-cinzel py-4 rounded-lg uppercase tracking-[0.2em] text-xs transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(212,175,55,0.1)] hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] active:scale-95"
           >
             Узнать Судьбу
           </button>
