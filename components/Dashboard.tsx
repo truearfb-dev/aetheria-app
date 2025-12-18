@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { UserProfile, DailyPrediction } from '../types';
 import Paywall from './Paywall';
 import { getTelegramWebApp, triggerHaptic, triggerNotification } from '../services/telegram';
@@ -24,6 +24,7 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [oracleQuestion, setOracleQuestion] = useState('');
   const [oracleAnswer, setOracleAnswer] = useState<string | null>(null);
   const [isConsulting, setIsConsulting] = useState(false);
+  const [guideStep, setGuideStep] = useState(0); // 0: none, 1: card, 2: oracle, 3: prediction
   
   // State for the "Not Enough Tokens" modal
   const [showTokenModal, setShowTokenModal] = useState(false);
@@ -31,15 +32,34 @@ const Dashboard: React.FC<DashboardProps> = ({
   // Focus ref for input
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleShare = () => {
-    triggerHaptic('medium');
-    const text = `🔮 Этерия: Моя карта дня — ${prediction.tarotCard.name}. Звезды шепчут...`;
-    const url = "https://t.me/AetheriaBot/app"; 
-    
-    if (tg) {
-        tg.openTelegramLink(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`);
-    }
-  };
+  // Auto-guide sequence
+  useEffect(() => {
+    const timer1 = setTimeout(() => {
+        setGuideStep(1);
+        triggerHaptic('light');
+    }, 500);
+
+    const timer2 = setTimeout(() => {
+        setGuideStep(2);
+        triggerHaptic('light');
+    }, 3500);
+
+    const timer3 = setTimeout(() => {
+        setGuideStep(3);
+        triggerHaptic('light');
+    }, 6500);
+
+    const timer4 = setTimeout(() => {
+        setGuideStep(0); // End guide
+    }, 9500);
+
+    return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+        clearTimeout(timer4);
+    };
+  }, []);
 
   const handleOracleConsult = async () => {
     if (!oracleQuestion.trim()) {
@@ -47,21 +67,18 @@ const Dashboard: React.FC<DashboardProps> = ({
         return;
     }
 
-    // --- FUNNEL LOGIC ---
     if (oracleTokens <= 0) {
         triggerNotification('warning');
-        setShowTokenModal(true); // Show custom modal
+        setShowTokenModal(true);
         return;
     }
 
-    // Consume token
     if (!onConsumeToken()) return;
 
     triggerHaptic('heavy');
     setIsConsulting(true);
     setOracleAnswer(null);
     
-    // AI Call
     const answer = await askTheOracle(oracleQuestion, user.zodiacSign, user.name);
     
     triggerNotification('success');
@@ -69,9 +86,24 @@ const Dashboard: React.FC<DashboardProps> = ({
     setIsConsulting(false);
   };
 
+  const highlightClass = (step: number) => {
+      if (guideStep !== step) return "transition-all duration-700";
+      return "transition-all duration-700 scale-[1.03] z-30 ring-2 ring-gold shadow-[0_0_30px_rgba(212,175,55,0.4)]";
+  };
+
+  const oracleHighlightClass = (step: number) => {
+    if (guideStep !== step) return "transition-all duration-700";
+    return "transition-all duration-700 scale-[1.03] z-30 ring-2 ring-neon shadow-[0_0_30px_rgba(176,38,255,0.4)]";
+  };
+
   return (
     <div className="relative z-10 p-4 max-w-lg mx-auto pb-24 animate-fadeIn">
       
+      {/* Dim overlay during guide */}
+      {guideStep > 0 && (
+          <div className="fixed inset-0 bg-black/40 z-20 pointer-events-none animate-fadeIn transition-opacity duration-1000"></div>
+      )}
+
       {/* 1. COMPACT HEADER */}
       <header className="flex justify-between items-end mb-4 border-b border-white/5 pb-2">
         <div>
@@ -86,7 +118,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       </header>
 
       {/* 2. COMPACT TAROT HOOK */}
-      <section className="mb-4 flex justify-center perspective-1000" onClick={() => triggerHaptic('light')}>
+      <section className={`mb-4 flex justify-center perspective-1000 ${highlightClass(1)}`} onClick={() => triggerHaptic('light')}>
         <div className="relative w-full max-w-[130px] aspect-[2/3] group">
             <div className="absolute inset-0 bg-gold/15 rounded-lg blur-lg group-hover:blur-xl transition-all duration-700"></div>
             <div className="relative h-full bg-gradient-to-b from-[#1a1a1a] to-black rounded-lg border border-gold/30 flex flex-col items-center justify-between p-3 shadow-2xl overflow-hidden">
@@ -102,7 +134,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       </section>
 
       {/* 3. ORACLE FUNNEL */}
-      <section className="mb-4 relative">
+      <section className={`mb-4 relative ${oracleHighlightClass(2)}`}>
           <div className="absolute -inset-1 bg-gradient-to-r from-neon via-purple-500 to-neon opacity-10 blur-md rounded-xl"></div>
           <div className="relative bg-[#0F0518]/90 border border-neon/20 rounded-xl p-4 backdrop-blur-xl">
               
@@ -148,7 +180,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       </section>
 
       {/* 4. THE SEALED SCROLL */}
-      <section className="mb-4">
+      <section className={`mb-4 ${highlightClass(3)} rounded-xl`}>
         <h2 className="font-cinzel text-center text-gray-600 text-[9px] tracking-[0.2em] mb-3 uppercase">Личное Пророчество</h2>
         
         <div className="relative min-h-[120px] rounded-xl overflow-hidden group">
