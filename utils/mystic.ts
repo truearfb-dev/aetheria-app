@@ -23,7 +23,6 @@ export const getZodiacSign = (dateStr: string): string => {
   return "Козерог";
 };
 
-// Simple pseudo-random number generator seeded by a string
 const seededRandom = (seed: string) => {
   let h = 0x811c9dc5;
   for (let i = 0; i < seed.length; i++) {
@@ -38,16 +37,18 @@ const seededRandom = (seed: string) => {
 };
 
 export const generateDailyPrediction = (zodiac: string): DailyPrediction => {
-  const today = new Date().toDateString(); // "Fri Oct 27 2023"
-  const seed = `${today}-${zodiac}`;
+  const now = new Date();
+  const today = now.toDateString(); 
+  const hour = now.getHours();
+  
+  // Добавляем час и название знака в сид, чтобы внутри одного дня была динамика
+  // Но сохраняем детерминированность в рамках часа для "солидности"
+  const seed = `${today}-${hour}-${zodiac}`;
   const rng = seededRandom(seed);
 
-  // Deterministic choices based on the day + zodiac
   const templateIndex = Math.floor(rng() * COLD_READING_TEMPLATES.length);
   const colorIndex = Math.floor(rng() * MYSTICAL_COLORS.length);
   const tarotIndex = Math.floor(rng() * TAROT_CARDS.length);
-  
-  // Choose a teaser that changes daily per user
   const teaserIndex = Math.floor(rng() * TEASERS.length);
 
   return {

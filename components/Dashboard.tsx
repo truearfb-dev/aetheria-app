@@ -53,7 +53,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
         </header>
 
-        {/* 2. DAILY CARD (TAROT) */}
+        {/* 2. DAILY CARD */}
         <section className="mb-4 w-full">
             <div className="relative w-full h-[70px] bg-gradient-to-r from-[#1a1a1a] to-black rounded-xl border border-gold/20 flex flex-row items-center p-3 gap-4 overflow-hidden shadow-xl">
                 <div className="absolute -left-4 top-0 w-24 h-full bg-gold/5 blur-2xl rounded-full"></div>
@@ -70,24 +70,25 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
         </section>
 
-        {/* 3. MAIN PREDICTION BLOCK (THE SLIPPERY SLOPE) */}
-        <section className="relative">
-            {/* Ambient Background Glow */}
-            <div className="absolute -inset-1 bg-gradient-to-b from-gold/5 via-transparent to-transparent rounded-3xl blur-2xl opacity-30"></div>
+        {/* 3. MAIN PREDICTION BLOCK */}
+        <section className="relative group">
+            <div className="absolute -inset-1 bg-gradient-to-b from-gold/10 via-transparent to-transparent rounded-3xl blur-2xl opacity-30 transition-opacity duration-1000"></div>
             
-            <div className="relative bg-black/50 border border-white/10 rounded-2xl overflow-hidden min-h-[400px] flex flex-col shadow-2xl backdrop-blur-sm">
+            <div className="relative bg-black/40 border border-white/10 rounded-2xl overflow-hidden min-h-[400px] flex flex-col shadow-2xl backdrop-blur-md">
                 <div className="p-6 flex-1 flex flex-col">
-                    <h2 className="font-cinzel text-center text-gold/60 text-[8px] font-bold tracking-[0.8em] mb-8 uppercase">✧ ПРОРОЧЕСТВО СУДЬБЫ ✧</h2>
+                    <h2 className="font-cinzel text-center text-gold/50 text-[8px] font-bold tracking-[0.6em] mb-6 uppercase">✧ ПРОРОЧЕСТВО СУДЬБЫ ✧</h2>
                     
                     <div className="relative flex-1 flex flex-col">
                         {/* FIRST PARAGRAPH (Always visible) */}
-                        <p className="text-white font-cinzel text-base leading-relaxed text-center italic px-3 mb-6 transition-all duration-700">
-                            {firstParagraph}
-                        </p>
+                        <div className="relative z-20">
+                           <p className="text-white font-cinzel text-base leading-relaxed text-center italic px-3 mb-6 transition-all duration-700">
+                                {firstParagraph}
+                            </p>
+                        </div>
 
                         {/* REMAINING CONTENT (Blurred or Clear) */}
                         <div className="relative flex-1">
-                            <div className={`transition-all duration-1000 space-y-6 pb-4 ${isLocked ? 'blur-xl select-none opacity-20 scale-[0.98]' : 'blur-0 opacity-100 scale-100'}`}>
+                            <div className={`transition-all duration-1000 space-y-6 pb-4 ${isLocked ? 'blur-xl select-none opacity-10 scale-[0.98]' : 'blur-0 opacity-100 scale-100'}`}>
                                 <p className="text-gray-300 font-lato text-sm leading-relaxed text-center whitespace-pre-wrap px-3 italic">
                                     {remainingText}
                                 </p>
@@ -100,30 +101,29 @@ const Dashboard: React.FC<DashboardProps> = ({
 
                             {/* SEAMLESS LOCK OVERLAY */}
                             {isLocked && (
-                                <div className="absolute inset-0 flex flex-col items-center justify-start pt-4 bg-gradient-to-t from-black via-transparent to-transparent">
+                                <div className="absolute inset-0 flex flex-col items-center justify-start pt-2 bg-gradient-to-t from-black/80 via-transparent to-transparent z-30">
                                     <div className="w-full max-w-[280px] flex flex-col items-center gap-8 mt-4">
                                         
                                         <button 
                                             onClick={handleUnlockClick}
                                             className="group relative w-full bg-gradient-to-b from-gold to-[#B8860B] text-black font-cinzel font-bold py-5 rounded-full shadow-[0_20px_40px_rgba(184,134,11,0.5)] active:scale-95 transition-all flex flex-col items-center overflow-hidden border border-white/30"
                                         >
-                                            {/* Shine animation on button */}
                                             <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out"></div>
                                             
-                                            <span className="text-[10px] tracking-[0.2em]">ПОСМОТРЕТЬ ПРЕДСКАЗАНИЕ ПОЛНОСТЬЮ</span>
+                                            <span className="text-[10px] tracking-[0.1em]">ПОСМОТРЕТЬ ПОЛНОСТЬЮ</span>
                                             <span className="text-[7px] mt-1.5 opacity-60 uppercase font-lato font-normal tracking-widest">
-                                                {visitCount <= 1 ? "Бесплатно за подписку" : "Открыть за 99₽"}
+                                                {visitCount <= 1 ? "Бесплатно за подписку" : "Открыть путь звезд"}
                                             </span>
                                         </button>
 
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className="flex items-center gap-4 opacity-30">
-                                                <div className="h-px w-12 bg-white"></div>
-                                                <span className="text-[8px] text-white font-cinzel">✧</span>
-                                                <div className="h-px w-12 bg-white"></div>
+                                        <div className="flex flex-col items-center gap-2 opacity-60">
+                                            <div className="flex items-center gap-4">
+                                                <div className="h-px w-8 bg-gold/30"></div>
+                                                <span className="text-[8px] text-gold font-cinzel">✦</span>
+                                                <div className="h-px w-8 bg-gold/30"></div>
                                             </div>
                                             <p className="text-[8px] text-gray-500 uppercase tracking-widest font-lato text-center">
-                                                Ваша судьба на сегодня готова <br/> к раскрытию
+                                                Загляните за пелену времени
                                             </p>
                                         </div>
                                     </div>
@@ -136,7 +136,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </section>
       </div>
 
-      {/* 4. STATS (BOTTOM SECTION) */}
+      {/* 4. STATS */}
       <div className="w-full">
         <div className="grid grid-cols-3 gap-3 mb-6">
             <StatCard label="Карма" value={prediction.karma} color="from-purple-600/30 to-purple-900/40" borderColor="border-purple-500/20" textColor="text-purple-200" />
@@ -144,12 +144,12 @@ const Dashboard: React.FC<DashboardProps> = ({
             <StatCard label="Любовь" value={prediction.love} color="from-pink-600/30 to-pink-900/40" borderColor="border-pink-500/20" textColor="text-pink-200" />
         </div>
 
-        <button onClick={onReset} className="w-full text-center text-[7px] text-gray-800 uppercase tracking-[0.6em] font-cinzel py-2 border-t border-white/5 transition-opacity hover:opacity-100 opacity-40">
+        <button onClick={onReset} className="w-full text-center text-[7px] text-gray-800 uppercase tracking-[0.6em] font-cinzel py-2 border-t border-white/5 opacity-40">
             Сброс астральной связи
         </button>
       </div>
 
-      {/* PAYMENT MODAL (Returning Users Only) */}
+      {/* PAYMENT MODAL */}
       {showPayOptions && (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/95 backdrop-blur-md animate-fadeIn" onClick={() => setShowPayOptions(false)}>
               <div className="w-full max-w-sm bg-[#0a0a0a] border-t border-white/10 rounded-t-[2.5rem] p-10 pb-12 shadow-[0_-20px_50px_rgba(0,0,0,1)]" onClick={e => e.stopPropagation()}>
