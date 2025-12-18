@@ -69,35 +69,35 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
 
       <div className="w-full max-w-sm backdrop-blur-md bg-white/5 border border-white/10 p-8 rounded-2xl shadow-2xl transition-all duration-500">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="text-left">
-            <label className="block text-xs uppercase tracking-wider text-gold mb-2 pl-1">Ваше Имя</label>
+          <div className="text-center">
+            <label className="block text-xs uppercase tracking-[0.2em] text-gold mb-3 font-cinzel">Ваше Имя</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold transition-all font-lato"
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white text-center focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold transition-all font-lato text-sm uppercase tracking-wider"
               placeholder="Введите имя"
             />
           </div>
 
-          <div className="text-left">
-            <label className="block text-xs uppercase tracking-wider text-gold mb-2 pl-1">Дата Рождения</label>
+          <div className="text-center">
+            <label className="block text-xs uppercase tracking-[0.2em] text-gold mb-3 font-cinzel">Дата Рождения</label>
             <input
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold transition-all font-lato"
+              className="w-full bg-black/40 border border-white/10 rounded-lg px-4 py-3 text-white text-center focus:border-gold focus:outline-none focus:ring-1 focus:ring-gold transition-all font-lato text-sm uppercase tracking-wider"
               style={{ colorScheme: 'dark' }}
             />
           </div>
 
           {/* Instant Validation Hook */}
-          <div className={`overflow-hidden transition-all duration-500 ease-in-out ${zodiac ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}>
-              <div className="bg-gold/10 border border-gold/30 rounded-lg p-3 flex items-center justify-center gap-3">
+          <div className={`overflow-hidden transition-all duration-500 ease-in-out ${zodiac ? 'max-h-24 opacity-100' : 'max-h-0 opacity-0'}`}>
+              <div className="bg-gold/10 border border-gold/30 rounded-lg p-3 flex items-center justify-center gap-3 mt-2">
                   <span className="text-2xl animate-pulse">✨</span>
                   <div className="text-left">
                       <p className="text-gold font-cinzel text-sm">Вы — {zodiac}</p>
-                      <p className="text-[10px] text-gray-300 font-lato">Звезды узнали вас...</p>
+                      <p className="text-[10px] text-gray-300 font-lato uppercase tracking-tighter">Звезды узнали вас...</p>
                   </div>
               </div>
           </div>
@@ -105,7 +105,7 @@ const Onboarding: React.FC<OnboardingProps> = ({ onComplete }) => {
           <button
             type="submit"
             disabled={!name || !date}
-            className="w-full mt-6 bg-gold/10 hover:bg-gold/20 text-gold border border-gold/50 font-cinzel py-3 rounded-lg uppercase tracking-widest transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(212,175,55,0.1)] hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] active:scale-95"
+            className="w-full mt-6 bg-gold/10 hover:bg-gold/20 text-gold border border-gold/50 font-cinzel py-3.5 rounded-lg uppercase tracking-[0.2em] text-xs transition-all disabled:opacity-30 disabled:cursor-not-allowed shadow-[0_0_15px_rgba(212,175,55,0.1)] hover:shadow-[0_0_20px_rgba(212,175,55,0.3)] active:scale-95"
           >
             Узнать Судьбу
           </button>
