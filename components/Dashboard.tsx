@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { UserProfile, DailyPrediction } from '../types';
-import { getTelegramWebApp, triggerHaptic, triggerNotification } from '../services/telegram';
+import { getTelegramWebApp, triggerHaptic } from '../services/telegram';
 
 interface DashboardProps {
   user: UserProfile;
@@ -19,20 +19,17 @@ const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const [showPayOptions, setShowPayOptions] = useState(false);
   const todayDate = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-  const tg = getTelegramWebApp();
-
-  // Prediction text split for preview
+  
+  // Разделение текста для создания эффекта "бесшовности"
   const paragraphs = prediction.text.split('\n').filter(p => p.trim() !== '');
-  const previewText = paragraphs[0] || "";
+  const firstParagraph = paragraphs[0] || "";
   const remainingText = paragraphs.slice(1).join('\n\n');
 
   const handleUnlockClick = () => {
     triggerHaptic('medium');
     if (visitCount <= 1) {
-        // First time - always channel subscribe
         onUnlockDaily();
     } else {
-        // Returning user - show pay modal
         setShowPayOptions(true);
     }
   };
@@ -56,16 +53,16 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
         </header>
 
-        {/* 2. DAILY CARD */}
+        {/* 2. DAILY CARD (TAROT) */}
         <section className="mb-4 w-full">
-            <div className="relative w-full h-[80px] bg-gradient-to-r from-[#1a1a1a] to-black rounded-xl border border-gold/20 flex flex-row items-center p-3 gap-4 overflow-hidden shadow-xl">
+            <div className="relative w-full h-[70px] bg-gradient-to-r from-[#1a1a1a] to-black rounded-xl border border-gold/20 flex flex-row items-center p-3 gap-4 overflow-hidden shadow-xl">
                 <div className="absolute -left-4 top-0 w-24 h-full bg-gold/5 blur-2xl rounded-full"></div>
-                <div className="relative z-10 text-4xl drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]">
+                <div className="relative z-10 text-3xl drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]">
                     {prediction.tarotCard.icon}
                 </div>
                 <div className="relative z-10 flex flex-col justify-center flex-1">
                     <div className="text-[7px] text-gold/40 uppercase tracking-[0.4em] font-cinzel mb-0.5">Карта Дня</div>
-                    <h3 className="text-gold font-cinzel text-sm leading-tight">{prediction.tarotCard.name}</h3>
+                    <h3 className="text-gold font-cinzel text-xs leading-tight">{prediction.tarotCard.name}</h3>
                     <p className="text-[9px] text-gray-400 font-lato line-clamp-1 italic">
                         {prediction.tarotCard.meaning}
                     </p>
@@ -73,98 +70,120 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
         </section>
 
-        {/* 3. MAIN PREDICTION BLOCK */}
-        <section className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-b from-gold/20 to-transparent rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000"></div>
+        {/* 3. MAIN PREDICTION BLOCK (THE SLIPPERY SLOPE) */}
+        <section className="relative">
+            {/* Ambient Background Glow */}
+            <div className="absolute -inset-1 bg-gradient-to-b from-gold/5 via-transparent to-transparent rounded-3xl blur-2xl opacity-30"></div>
             
-            <div className="relative bg-black/40 border border-white/10 rounded-2xl overflow-hidden min-h-[320px] flex flex-col">
-                <div className="p-5 flex-1 flex flex-col">
-                    <h2 className="font-cinzel text-center text-gold text-[10px] font-bold tracking-[0.5em] mb-4 uppercase">✧ ПРОРОЧЕСТВО СУДЬБЫ ✧</h2>
+            <div className="relative bg-black/50 border border-white/10 rounded-2xl overflow-hidden min-h-[400px] flex flex-col shadow-2xl backdrop-blur-sm">
+                <div className="p-6 flex-1 flex flex-col">
+                    <h2 className="font-cinzel text-center text-gold/60 text-[8px] font-bold tracking-[0.8em] mb-8 uppercase">✧ ПРОРОЧЕСТВО СУДЬБЫ ✧</h2>
                     
-                    {/* Content Area */}
-                    <div className="relative overflow-hidden flex-1">
-                        {/* Always visible first paragraph */}
-                        <p className="text-gray-200 font-cinzel text-sm leading-relaxed text-center mb-4 italic px-2">
-                            {previewText}
+                    <div className="relative flex-1 flex flex-col">
+                        {/* FIRST PARAGRAPH (Always visible) */}
+                        <p className="text-white font-cinzel text-base leading-relaxed text-center italic px-3 mb-6 transition-all duration-700">
+                            {firstParagraph}
                         </p>
-                        
-                        {/* Blurred rest of content */}
-                        <div className={`transition-all duration-1000 ${isLocked ? 'blur-md select-none' : 'blur-0'}`}>
-                            <p className="text-gray-300 font-lato text-sm leading-relaxed text-center whitespace-pre-wrap">
-                                {remainingText}
-                            </p>
-                        </div>
 
-                        {/* Lock Overlay */}
-                        {isLocked && (
-                            <div className="absolute inset-x-0 bottom-0 top-[40px] flex flex-col items-center justify-center bg-gradient-to-t from-black via-black/40 to-transparent pt-12">
-                                <button 
-                                    onClick={handleUnlockClick}
-                                    className="bg-gradient-to-b from-gold to-[#B8860B] text-black font-cinzel font-bold text-xs py-4 px-10 rounded-full shadow-[0_10px_30px_rgba(184,134,11,0.6)] active:scale-95 transition-all flex flex-col items-center"
-                                >
-                                    <span className="tracking-widest">ПОСМОТРЕТЬ ПРЕДСКАЗАНИЕ</span>
-                                    <span className="text-[8px] mt-1 opacity-80 uppercase">
-                                        {visitCount <= 1 ? "Бесплатно за подписку" : "Открыть путь звезд"}
-                                    </span>
-                                </button>
-                                <p className="mt-6 text-[8px] text-gray-500 uppercase tracking-widest text-center animate-pulse">
-                                    Сила пророчества активна только сегодня
+                        {/* REMAINING CONTENT (Blurred or Clear) */}
+                        <div className="relative flex-1">
+                            <div className={`transition-all duration-1000 space-y-6 pb-4 ${isLocked ? 'blur-xl select-none opacity-20 scale-[0.98]' : 'blur-0 opacity-100 scale-100'}`}>
+                                <p className="text-gray-300 font-lato text-sm leading-relaxed text-center whitespace-pre-wrap px-3 italic">
+                                    {remainingText}
                                 </p>
+                                {!isLocked && (
+                                    <div className="pt-8 border-t border-white/5 text-center">
+                                        <p className="text-[9px] text-gold/30 font-cinzel tracking-[0.3em] uppercase italic">Сила предсказания активна только до полуночи</p>
+                                    </div>
+                                )}
                             </div>
-                        )}
+
+                            {/* SEAMLESS LOCK OVERLAY */}
+                            {isLocked && (
+                                <div className="absolute inset-0 flex flex-col items-center justify-start pt-4 bg-gradient-to-t from-black via-transparent to-transparent">
+                                    <div className="w-full max-w-[280px] flex flex-col items-center gap-8 mt-4">
+                                        
+                                        <button 
+                                            onClick={handleUnlockClick}
+                                            className="group relative w-full bg-gradient-to-b from-gold to-[#B8860B] text-black font-cinzel font-bold py-5 rounded-full shadow-[0_20px_40px_rgba(184,134,11,0.5)] active:scale-95 transition-all flex flex-col items-center overflow-hidden border border-white/30"
+                                        >
+                                            {/* Shine animation on button */}
+                                            <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out"></div>
+                                            
+                                            <span className="text-[10px] tracking-[0.2em]">ПОСМОТРЕТЬ ПРЕДСКАЗАНИЕ ПОЛНОСТЬЮ</span>
+                                            <span className="text-[7px] mt-1.5 opacity-60 uppercase font-lato font-normal tracking-widest">
+                                                {visitCount <= 1 ? "Бесплатно за подписку" : "Открыть за 99₽"}
+                                            </span>
+                                        </button>
+
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="flex items-center gap-4 opacity-30">
+                                                <div className="h-px w-12 bg-white"></div>
+                                                <span className="text-[8px] text-white font-cinzel">✧</span>
+                                                <div className="h-px w-12 bg-white"></div>
+                                            </div>
+                                            <p className="text-[8px] text-gray-500 uppercase tracking-widest font-lato text-center">
+                                                Ваша судьба на сегодня готова <br/> к раскрытию
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
         </section>
       </div>
 
-      {/* 4. STATS (UNCHANGED) */}
+      {/* 4. STATS (BOTTOM SECTION) */}
       <div className="w-full">
-        <div className="grid grid-cols-3 gap-3 mb-4">
-            <StatCard label="Карма" value={prediction.karma} color="from-purple-600/40 to-purple-900/40" borderColor="border-purple-500/30" textColor="text-purple-300" />
-            <StatCard label="Удача" value={prediction.luck} color="from-gold/40 to-yellow-900/40" borderColor="border-gold/30" textColor="text-gold" />
-            <StatCard label="Любовь" value={prediction.love} color="from-pink-600/40 to-pink-900/40" borderColor="border-pink-500/30" textColor="text-pink-300" />
+        <div className="grid grid-cols-3 gap-3 mb-6">
+            <StatCard label="Карма" value={prediction.karma} color="from-purple-600/30 to-purple-900/40" borderColor="border-purple-500/20" textColor="text-purple-200" />
+            <StatCard label="Удача" value={prediction.luck} color="from-gold/30 to-yellow-900/40" borderColor="border-gold/20" textColor="text-gold" />
+            <StatCard label="Любовь" value={prediction.love} color="from-pink-600/30 to-pink-900/40" borderColor="border-pink-500/20" textColor="text-pink-200" />
         </div>
 
-        <button onClick={onReset} className="w-full text-center text-[7px] text-gray-800 uppercase tracking-[0.5em] font-cinzel py-1 border-t border-white/5 opacity-40">
+        <button onClick={onReset} className="w-full text-center text-[7px] text-gray-800 uppercase tracking-[0.6em] font-cinzel py-2 border-t border-white/5 transition-opacity hover:opacity-100 opacity-40">
             Сброс астральной связи
         </button>
       </div>
 
-      {/* PAYMENT MODAL (Only for returning users) */}
+      {/* PAYMENT MODAL (Returning Users Only) */}
       {showPayOptions && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/90 backdrop-blur-sm animate-fadeIn" onClick={() => setShowPayOptions(false)}>
-              <div className="w-full max-w-sm bg-[#121212] border-t border-white/20 rounded-t-3xl p-8" onClick={e => e.stopPropagation()}>
-                  <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-6"></div>
-                  <h3 className="text-xl font-cinzel text-white text-center mb-2 uppercase tracking-widest">Разблокировать Судьбу</h3>
-                  <p className="text-gray-500 text-xs text-center mb-8 font-lato">Выберите ваш путь получения пророчеств</p>
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/95 backdrop-blur-md animate-fadeIn" onClick={() => setShowPayOptions(false)}>
+              <div className="w-full max-w-sm bg-[#0a0a0a] border-t border-white/10 rounded-t-[2.5rem] p-10 pb-12 shadow-[0_-20px_50px_rgba(0,0,0,1)]" onClick={e => e.stopPropagation()}>
+                  <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-8"></div>
+                  
+                  <h3 className="text-xl font-cinzel text-white text-center mb-2 uppercase tracking-[0.2em]">Принять Судьбу</h3>
+                  <p className="text-gray-500 text-[10px] text-center mb-10 font-lato uppercase tracking-widest">Выберите глубину откровения</p>
                   
                   <div className="space-y-4">
                       <button 
                         onClick={() => { onSingleUnlock(); setShowPayOptions(false); }}
-                        className="w-full bg-white/5 border border-white/10 p-5 rounded-2xl flex items-center justify-between hover:bg-white/10 transition-all group"
+                        className="w-full bg-white/5 border border-white/10 p-6 rounded-2xl flex items-center justify-between group active:scale-[0.98] transition-all"
                       >
                           <div className="text-left">
-                              <p className="text-sm font-cinzel text-white">Разовое Откровение</p>
-                              <p className="text-[10px] text-gray-500 uppercase tracking-tighter">На 1 день</p>
+                              <p className="text-xs font-cinzel text-white tracking-widest">Разовое Откровение</p>
+                              <p className="text-[9px] text-gray-500 uppercase mt-1">Доступ на 24 часа</p>
                           </div>
-                          <span className="text-gold font-bold font-cinzel text-lg">99₽</span>
+                          <span className="text-gold font-bold font-cinzel text-base">99₽</span>
                       </button>
 
                       <button 
                         onClick={() => { onUnlockPremium(); setShowPayOptions(false); }}
-                        className="w-full bg-gradient-to-r from-gold to-yellow-600 p-5 rounded-2xl flex items-center justify-between shadow-[0_10px_20px_rgba(212,175,55,0.2)] hover:scale-[1.02] transition-all"
+                        className="w-full bg-gradient-to-r from-gold to-[#B8860B] p-6 rounded-2xl flex items-center justify-between shadow-[0_10px_30px_rgba(184,134,11,0.3)] group active:scale-[0.98] transition-all"
                       >
                           <div className="text-left">
-                              <p className="text-sm font-cinzel text-black font-bold">Путь Мастера</p>
-                              <p className="text-[10px] text-black/60 uppercase font-bold">Подписка на месяц</p>
+                              <p className="text-xs font-cinzel text-black font-bold tracking-widest">Путь Мастера</p>
+                              <p className="text-[9px] text-black/70 uppercase mt-1 font-bold">Подписка на 30 дней</p>
                           </div>
-                          <span className="text-black font-black font-cinzel text-lg">199₽</span>
+                          <span className="text-black font-black font-cinzel text-base">199₽</span>
                       </button>
                   </div>
                   
-                  <button onClick={() => setShowPayOptions(false)} className="w-full mt-6 text-[10px] text-gray-600 uppercase tracking-widest py-2">
-                      Закрыть
+                  <button onClick={() => setShowPayOptions(false)} className="w-full mt-8 text-[9px] text-gray-700 uppercase tracking-[0.4em] py-2 font-lato">
+                      Позже
                   </button>
               </div>
           </div>
@@ -174,9 +193,9 @@ const Dashboard: React.FC<DashboardProps> = ({
 };
 
 const StatCard: React.FC<{ label: string; value: number; color: string; borderColor: string; textColor: string }> = ({ label, value, color, borderColor, textColor }) => (
-    <div className={`bg-gradient-to-b ${color} ${borderColor} border rounded-xl p-3 flex flex-col items-center justify-center gap-1 shadow-lg`}>
-        <span className="text-[8px] uppercase text-gray-400 font-cinzel tracking-widest">{label}</span>
-        <span className={`text-lg font-bold font-cinzel ${textColor}`}>{value}%</span>
+    <div className={`bg-gradient-to-b ${color} ${borderColor} border rounded-xl p-3 flex flex-col items-center justify-center gap-1 shadow-inner`}>
+        <span className="text-[8px] uppercase text-gray-400 font-cinzel tracking-widest mb-0.5">{label}</span>
+        <span className={`text-base font-bold font-cinzel ${textColor} drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]`}>{value}%</span>
     </div>
 );
 
