@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserProfile, DailyPrediction } from '../types';
 import { triggerHaptic, triggerNotification, getTelegramWebApp } from '../services/telegram';
 
 // ==========================================
 // НАСТРОЙКИ КАНАЛА:
-const CHANNEL_URL = "https://t.me/+agv13DXReBY1MzYy"; // Ссылка для пользователя
-const CHANNEL_ID = "-1003373710045"; // ID или Username канала для бота (например "@my_channel" или "-100...")
+const CHANNEL_URL = "https://t.me/durov"; 
+const CHANNEL_ID = "@durov"; 
 // ==========================================
 
 interface DashboardProps {
@@ -25,6 +25,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 }) => {
   const [showPayOptions, setShowPayOptions] = useState(false);
   const [isCheckingSub, setIsCheckingSub] = useState(false);
+  const [timeLeft, setTimeLeft] = useState("");
+  
   const tg = getTelegramWebApp();
   const todayDate = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
   
@@ -32,57 +34,73 @@ const Dashboard: React.FC<DashboardProps> = ({
   const introText = parts[0]?.trim() || "";
   const mainText = parts[1]?.trim() || "";
 
+  // Таймер до полуночи
+  useEffect(() => {
+    const timer = setInterval(() => {
+        const now = new Date();
+        const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+        const diff = tomorrow.getTime() - now.getTime();
+        
+        const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+        const mins = Math.floor((diff / (1000 * 60)) % 60);
+        const secs = Math.floor((diff / 1000) % 60);
+        
+        setTimeLeft(`${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
   const handleUnlockClick = () => {
     triggerHaptic('medium');
     setShowPayOptions(true);
   };
 
+  const handleShare = () => {
+    triggerHaptic('light');
+    const shareText = `🔮 Моё пророчество на сегодня: "${prediction.tarotCard.name}". Узнай свою судьбу в Этерии!`;
+    const shareUrl = "https://t.me/your_bot_user_name/app"; // Замените на вашу ссылку
+    
+    if (tg && (tg as any).shareToStory) {
+        (tg as any).shareToStory(shareUrl, { text: shareText });
+    } else {
+        const fullUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+        if (tg) tg.openTelegramLink(fullUrl);
+        else window.open(fullUrl, '_blank');
+    }
+  };
+
   const verifySubscription = async () => {
     const userId = tg?.initDataUnsafe?.user?.id;
-    
     if (!userId) {
-        alert("Не удалось определить ваш Telegram ID. Попробуйте перезапустить приложение.");
+        alert("Ошибка ID. Перезапустите приложение.");
         return;
     }
-
     setIsCheckingSub(true);
-    triggerHaptic('light');
-
     try {
         const response = await fetch('/api/check-subscription', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ userId, channelId: CHANNEL_ID })
         });
-
         const data = await response.json();
-
         if (data.subscribed) {
             triggerNotification('success');
             onUnlockDaily();
             setShowPayOptions(false);
         } else {
             triggerNotification('warning');
-            alert("Вы еще не подписались на наш астральный канал. Подпишитесь, чтобы открыть пророчество.");
+            alert("Вы еще не подписались на канал.");
         }
     } catch (e) {
-        console.error(e);
-        alert("Ошибка при проверке подписки. Попробуйте позже.");
+        alert("Ошибка проверки.");
     } finally {
         setIsCheckingSub(false);
     }
   };
 
   const handleChannelAction = () => {
-    // Открываем канал
-    if (tg) {
-        tg.openTelegramLink(CHANNEL_URL);
-    } else {
-        window.open(CHANNEL_URL, '_blank');
-    }
-    
-    // Даем пользователю время подписаться, прежде чем он нажмет "Проверить"
-    // (Логика теперь разделена: сначала переход, потом кнопка подтверждения в том же окне)
+    if (tg) tg.openTelegramLink(CHANNEL_URL);
+    else window.open(CHANNEL_URL, '_blank');
   };
 
   return (
@@ -132,10 +150,36 @@ const Dashboard: React.FC<DashboardProps> = ({
                         </div>
 
                         <div className="relative flex-1 overflow-hidden mt-2">
-                            <div className={`transition-all duration-1000 h-full ${isLocked ? 'blur-[5px] opacity-30 scale-[1.01] tracking-tighter' : 'blur-0 opacity-100 overflow-y-auto pt-2'}`}>
-                                <p className="text-gray-100 font-lato text-[12px] leading-[1.8] text-center whitespace-pre-wrap px-3 italic pb-20">
+                            <div className={`transition-all duration-1000 h-full ${isLocked ? 'blur-[5px] opacity-30 scale-[1.01] tracking-tighter' : 'blur-0 opacity-100 overflow-y-auto pt-2 custom-scrollbar'}`}>
+                                <p className="text-gray-100 font-lato text-[12px] leading-[1.8] text-center whitespace-pre-wrap px-3 italic pb-10">
                                     {mainText || "..."}
                                 </p>
+                                
+                                {/* POST-REVEAL ACTIONS (When Unlocked) */}
+                                {!isLocked && (
+                                    <div className="mt-6 space-y-6 pb-20 animate-fadeIn">
+                                        <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-gold/30 to-transparent"></div>
+                                        
+                                        {/* SHARE BUTTON */}
+                                        <button 
+                                            onClick={handleShare}
+                                            className="w-full bg-white/5 border border-white/10 py-4 rounded-xl flex items-center justify-center gap-3 active:scale-95 transition-all group"
+                                        >
+                                            <span className="text-gold text-lg group-hover:rotate-12 transition-transform">✨</span>
+                                            <span className="text-[10px] font-cinzel uppercase tracking-[0.2em] text-white">Поделиться Откровением</span>
+                                        </button>
+
+                                        {/* NEXT PROPHECY TIMER */}
+                                        <div className="flex flex-col items-center gap-2 py-4 bg-white/5 rounded-2xl border border-white/5">
+                                            <p className="text-[7px] text-gray-500 uppercase tracking-[0.4em] font-cinzel">Следующее пророчество через</p>
+                                            <p className="text-xl font-cinzel text-gold tracking-widest">{timeLeft}</p>
+                                        </div>
+
+                                        <div className="text-center italic text-gray-500 text-[10px] px-6">
+                                            «Звезды дали свой ответ. Теперь Твой ход в этом великом танце Вселенной...»
+                                        </div>
+                                    </div>
+                                )}
                             </div>
 
                             {isLocked && (
@@ -180,7 +224,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                   <p className="text-gray-500 text-[10px] text-center mb-8 font-lato uppercase tracking-widest text-balance">Звезды не говорят бесплатно с теми, кто не готов к истине</p>
                   
                   <div className="space-y-3">
-                      {/* УЛУЧШЕННЫЙ БЛОК ПОДПИСКИ */}
                       <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
                           <button onClick={handleChannelAction} className="w-full flex items-center justify-between group active:scale-[0.98] transition-all">
                               <div className="text-left">
@@ -189,9 +232,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                               </div>
                               <span className="text-lg">📢</span>
                           </button>
-                          
                           <div className="h-[1px] bg-white/5 w-full"></div>
-                          
                           <button 
                             onClick={verifySubscription} 
                             disabled={isCheckingSub}
