@@ -2,11 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { UserProfile, DailyPrediction } from '../types';
 import { triggerHaptic, triggerNotification, getTelegramWebApp } from '../services/telegram';
 
-// ==========================================
-// НАСТРОЙКИ КАНАЛА:
-const CHANNEL_URL = "https://t.me/+agv13DXReBY1MzYy"; 
-const CHANNEL_ID = "-1003373710045"; 
-// ==========================================
+const CHANNEL_URL = "https://t.me/durov"; 
+const CHANNEL_ID = "@durov"; 
 
 interface DashboardProps {
   user: UserProfile;
@@ -32,49 +29,33 @@ const Dashboard: React.FC<DashboardProps> = ({
   
   const parts = prediction.text.split('---');
   const introText = parts[0]?.trim() || "";
-  const mainText = parts[1]?.trim() || "";
+  const mainContent = parts[1]?.trim() || "";
 
-  // Таймер до полуночи
   useEffect(() => {
     const timer = setInterval(() => {
         const now = new Date();
         const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
         const diff = tomorrow.getTime() - now.getTime();
-        
         const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
         const mins = Math.floor((diff / (1000 * 60)) % 60);
         const secs = Math.floor((diff / 1000) % 60);
-        
         setTimeLeft(`${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`);
     }, 1000);
     return () => clearInterval(timer);
   }, []);
 
-  const handleUnlockClick = () => {
-    triggerHaptic('medium');
-    setShowPayOptions(true);
-  };
-
   const handleShare = () => {
     triggerHaptic('light');
-    const shareText = `🔮 Моё пророчество на сегодня: "${prediction.tarotCard.name}". Узнай свою судьбу в Этерии!`;
-    const shareUrl = "https://t.me/your_bot_user_name/app"; // Замените на вашу ссылку
-    
-    if (tg && (tg as any).shareToStory) {
-        (tg as any).shareToStory(shareUrl, { text: shareText });
-    } else {
-        const fullUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
-        if (tg) tg.openTelegramLink(fullUrl);
-        else window.open(fullUrl, '_blank');
-    }
+    const shareText = `🔮 Моё пророчество: "${prediction.tarotCard.name}". Узнай судьбу в приложении Этерия!`;
+    const shareUrl = "https://t.me/your_bot/app";
+    const fullUrl = `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(shareText)}`;
+    if (tg) tg.openTelegramLink(fullUrl);
+    else window.open(fullUrl, '_blank');
   };
 
   const verifySubscription = async () => {
     const userId = tg?.initDataUnsafe?.user?.id;
-    if (!userId) {
-        alert("Ошибка ID. Перезапустите приложение.");
-        return;
-    }
+    if (!userId) return;
     setIsCheckingSub(true);
     try {
         const response = await fetch('/api/check-subscription', {
@@ -89,182 +70,162 @@ const Dashboard: React.FC<DashboardProps> = ({
             setShowPayOptions(false);
         } else {
             triggerNotification('warning');
-            alert("Вы еще не подписались на канал.");
+            alert("Нужно подписаться на канал!");
         }
     } catch (e) {
-        alert("Ошибка проверки.");
+        alert("Ошибка сети.");
     } finally {
         setIsCheckingSub(false);
     }
   };
 
-  const handleChannelAction = () => {
-    if (tg) tg.openTelegramLink(CHANNEL_URL);
-    else window.open(CHANNEL_URL, '_blank');
+  const renderStructuredText = (text: string) => {
+      const lines = text.split('\n').filter(l => l.trim());
+      return lines.map((line, idx) => {
+          let icon = "✦";
+          let title = "";
+          let content = line;
+
+          if (line.startsWith("УТРО:")) { icon = "🌅"; title = "Утро"; content = line.replace("УТРО:", ""); }
+          else if (line.startsWith("ДЕНЬ:")) { icon = "☀️"; title = "День"; content = line.replace("ДЕНЬ:", ""); }
+          else if (line.startsWith("ВЕЧЕР:")) { icon = "🌙"; title = "Вечер"; content = line.replace("ВЕЧЕР:", ""); }
+          else if (line.startsWith("СОВЕТ:")) { icon = "📜"; title = "Совет Оракула"; content = line.replace("СОВЕТ:", ""); }
+
+          return (
+              <div key={idx} className="mb-6 animate-fadeIn" style={{ animationDelay: `${idx * 200}ms` }}>
+                  {title && (
+                    <div className="flex items-center gap-2 mb-2">
+                        <span className="text-lg">{icon}</span>
+                        <span className="text-[10px] font-cinzel text-gold uppercase tracking-[0.2em]">{title}</span>
+                    </div>
+                  )}
+                  <p className={`text-gray-200 font-lato text-[13px] leading-relaxed italic ${!title ? 'text-center opacity-70' : ''}`}>
+                    {content.trim()}
+                  </p>
+              </div>
+          );
+      });
   };
 
   return (
     <div className="relative z-10 p-3 max-w-lg mx-auto h-[100dvh] flex flex-col justify-between overflow-hidden animate-fadeIn select-none">
       
       <div className="flex-1 flex flex-col min-h-0">
-        <header className="flex justify-between items-start mb-1.5 border-b border-white/5 pb-1 shrink-0">
+        <header className="flex justify-between items-start mb-2 border-b border-white/5 pb-1 shrink-0">
             <div className="flex flex-col">
                 <h1 className="text-base font-cinzel text-white leading-tight uppercase tracking-widest">Этерия</h1>
                 <p className="text-[8px] text-gold/80 font-cinzel uppercase tracking-wider">{todayDate}</p>
             </div>
-            <div className="text-right flex flex-col items-end">
+            <div className="text-right">
                 <p className="text-[9px] text-white font-cinzel uppercase">{user.zodiacSign}</p>
-                <div className="flex items-center gap-1">
-                   <div className="w-1 h-1 rounded-full bg-gold animate-pulse"></div>
-                   <p className="text-[6px] text-gray-500 font-lato uppercase tracking-tighter">Связь установлена</p>
-                </div>
             </div>
         </header>
 
-        <section className="mb-1.5 shrink-0">
-            <div className="relative w-full h-[40px] bg-white/5 rounded-lg border border-white/10 flex items-center px-4 gap-3">
-                <span className="text-lg shrink-0">{prediction.tarotCard.icon}</span>
+        <section className="mb-2 shrink-0">
+            <div className="relative w-full h-14 bg-white/5 rounded-xl border border-white/10 flex items-center justify-center gap-4 overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-r from-gold/5 via-transparent to-gold/5"></div>
+                <span className="text-2xl">{prediction.tarotCard.icon}</span>
                 <div className="flex flex-col">
-                    <span className="text-[5px] text-gold/40 uppercase font-cinzel tracking-widest leading-none">Аркан</span>
-                    <span className="text-[9px] text-gold font-cinzel uppercase tracking-wider">{prediction.tarotCard.name}</span>
+                    <span className="text-[7px] text-gold/60 uppercase font-cinzel tracking-widest">Аркан дня</span>
+                    <span className="text-[11px] text-gold font-cinzel uppercase tracking-widest font-bold">{prediction.tarotCard.name}</span>
                 </div>
             </div>
         </section>
 
-        <section className="relative flex-1 min-h-0 flex flex-col mb-2">
-            <div className="relative flex-1 bg-black/40 border border-white/10 rounded-2xl flex flex-col shadow-2xl backdrop-blur-md overflow-hidden">
-                <div className="p-4 sm:p-5 flex-1 flex flex-col overflow-hidden relative">
-                    <h2 className="font-cinzel text-center text-gold/30 text-[7px] font-bold tracking-[0.8em] mb-3 uppercase shrink-0">✧ ПРОРОЧЕСТВО СУДЬБЫ ✧</h2>
-                    
-                    <div className="relative flex-1 flex flex-col overflow-hidden">
-                        <div className="relative z-10 shrink-0 mb-1">
-                           <p className="text-white font-cinzel text-[14px] leading-[1.6] text-center italic px-1 drop-shadow-sm">
-                                {introText}
-                                {isLocked && (
-                                    <span className="inline-block ml-1">
-                                        <span className="text-gold">...</span>
-                                        <span className="inline-block ml-2 animate-bounce text-gold not-italic">↓</span>
-                                    </span>
-                                )}
-                            </p>
-                        </div>
+        <section className="relative flex-1 min-h-0 flex flex-col mb-4">
+            <div className="relative flex-1 bg-black/60 border border-white/10 rounded-[2rem] flex flex-col shadow-2xl backdrop-blur-xl overflow-hidden">
+                <div className="p-6 flex-1 flex flex-col overflow-hidden relative">
+                    <div className="relative z-10 shrink-0 mb-4 border-b border-white/5 pb-4">
+                       <p className="text-white font-cinzel text-[14px] leading-[1.6] text-center italic px-2">
+                            {introText}
+                        </p>
+                    </div>
 
-                        <div className="relative flex-1 overflow-hidden mt-2">
-                            <div className={`transition-all duration-1000 h-full ${isLocked ? 'blur-[5px] opacity-30 scale-[1.01] tracking-tighter' : 'blur-0 opacity-100 overflow-y-auto pt-2 custom-scrollbar'}`}>
-                                <p className="text-gray-100 font-lato text-[12px] leading-[1.8] text-center whitespace-pre-wrap px-3 italic pb-10">
-                                    {mainText || "..."}
-                                </p>
-                                
-                                {/* POST-REVEAL ACTIONS (When Unlocked) */}
-                                {!isLocked && (
-                                    <div className="mt-6 space-y-6 pb-20 animate-fadeIn">
-                                        <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-gold/30 to-transparent"></div>
-                                        
-                                        {/* SHARE BUTTON */}
-                                        <button 
-                                            onClick={handleShare}
-                                            className="w-full bg-white/5 border border-white/10 py-4 rounded-xl flex items-center justify-center gap-3 active:scale-95 transition-all group"
-                                        >
-                                            <span className="text-gold text-lg group-hover:rotate-12 transition-transform">✨</span>
-                                            <span className="text-[10px] font-cinzel uppercase tracking-[0.2em] text-white">Поделиться Откровением</span>
-                                        </button>
-
-                                        {/* NEXT PROPHECY TIMER */}
-                                        <div className="flex flex-col items-center gap-2 py-4 bg-white/5 rounded-2xl border border-white/5">
-                                            <p className="text-[7px] text-gray-500 uppercase tracking-[0.4em] font-cinzel">Следующее пророчество через</p>
-                                            <p className="text-xl font-cinzel text-gold tracking-widest">{timeLeft}</p>
-                                        </div>
-
-                                        <div className="text-center italic text-gray-500 text-[10px] px-6">
-                                            «Звезды дали свой ответ. Теперь Твой ход в этом великом танце Вселенной...»
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {isLocked && (
-                                <div className="absolute inset-0 flex flex-col items-center justify-start z-20">
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
-                                    <div className="relative z-30 w-full px-6 flex flex-col items-center gap-4 mt-8">
-                                        <button 
-                                            onClick={handleUnlockClick}
-                                            className="group relative w-full max-w-[260px] bg-gradient-to-b from-gold via-gold to-[#B8860B] text-black font-cinzel font-bold py-4 rounded-full shadow-[0_20px_50px_rgba(0,0,0,1)] active:scale-95 transition-all flex flex-col items-center overflow-hidden border border-white/40"
-                                        >
-                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-1000"></div>
-                                            <span className="text-[11px] tracking-[0.15em] uppercase drop-shadow-sm leading-none pt-1">Раскрыть Откровение</span>
-                                            <div className="w-1/2 h-[1px] bg-black/20 my-1.5"></div>
-                                            <span className="text-[11px] uppercase font-lato font-black tracking-[0.1em] text-black/90 px-2 drop-shadow-sm">Узнать продолжение</span>
-                                        </button>
+                    <div className="relative flex-1 overflow-hidden">
+                        <div className={`transition-all duration-1000 h-full custom-scrollbar overflow-y-auto px-2 ${isLocked ? 'blur-[8px] opacity-20 pointer-events-none' : 'blur-0 opacity-100'}`}>
+                            {renderStructuredText(mainContent || "УТРО: Звезды шепчут о начале.\nДЕНЬ: Тень сменяется светом.\nВЕЧЕР: Покой найдет тебя.")}
+                            
+                            {!isLocked && (
+                                <div className="mt-8 space-y-4 pb-10">
+                                    <button onClick={handleShare} className="w-full bg-gold/10 border border-gold/30 py-4 rounded-2xl flex items-center justify-center gap-3 active:scale-95 transition-all group">
+                                        <span className="text-gold">✨</span>
+                                        <span className="text-[10px] font-cinzel uppercase tracking-widest text-gold">Поделиться судьбой</span>
+                                    </button>
+                                    <div className="flex flex-col items-center p-4 bg-white/5 rounded-2xl border border-white/5">
+                                        <p className="text-[8px] text-gray-500 uppercase tracking-[0.3em] mb-1">Обновление через</p>
+                                        <p className="text-xl font-cinzel text-white/80 tracking-[0.2em]">{timeLeft}</p>
                                     </div>
                                 </div>
                             )}
                         </div>
+
+                        {isLocked && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
+                                <button 
+                                    onClick={() => setShowPayOptions(true)}
+                                    className="group relative bg-gold text-black font-cinzel font-bold px-10 py-5 rounded-full shadow-[0_0_50px_rgba(212,175,55,0.3)] active:scale-95 transition-all"
+                                >
+                                    <span className="text-[11px] tracking-[0.2em] uppercase">Открыть тайну</span>
+                                </button>
+                                <p className="mt-4 text-[9px] text-gold/50 uppercase tracking-[0.3em] animate-pulse">Предсказание зашифровано</p>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
         </section>
       </div>
 
-      <div className="shrink-0 pb-1">
-        <div className="grid grid-cols-3 gap-2 mb-2">
-            <StatCard label="Карма" value={prediction.karma} color="from-purple-900/40 to-black" borderColor="border-purple-500/20" textColor="text-purple-300" />
-            <StatCard label="Удача" value={prediction.luck} color="from-gold/30 to-black" borderColor="border-gold/20" textColor="text-gold" />
-            <StatCard label="Любовь" value={prediction.love} color="from-pink-900/40 to-black" borderColor="border-pink-500/20" textColor="text-pink-300" />
+      <div className="shrink-0 pb-2">
+        <div className="grid grid-cols-3 gap-3">
+            <StatCard label="Карма" value={prediction.karma} color="from-purple-900/20" textColor="text-purple-300" />
+            <StatCard label="Удача" value={prediction.luck} color="from-gold/20" textColor="text-gold" />
+            <StatCard label="Любовь" value={prediction.love} color="from-pink-900/20" textColor="text-pink-300" />
         </div>
-        <button onClick={onReset} className="w-full text-center text-[7px] text-white/20 uppercase tracking-[0.4em] font-cinzel py-1 hover:text-white/40 transition-colors">
-            — Обновить Поток —
+        <button onClick={onReset} className="w-full text-center text-[7px] text-white/10 uppercase tracking-[0.5em] font-cinzel py-3 mt-2">
+            — Сбросить цикл —
         </button>
       </div>
 
       {showPayOptions && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/90 backdrop-blur-md animate-fadeIn" onClick={() => setShowPayOptions(false)}>
-              <div className="w-full max-w-sm bg-[#0a0a0a] border-t border-white/10 rounded-t-[2.5rem] p-8 pb-10 shadow-[0_-20px_50px_rgba(0,0,0,1)]" onClick={e => e.stopPropagation()}>
-                  <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-6"></div>
-                  <h3 className="text-xl font-cinzel text-white text-center mb-1 uppercase tracking-[0.2em]">Принять Судьбу</h3>
-                  <p className="text-gray-500 text-[10px] text-center mb-8 font-lato uppercase tracking-widest text-balance">Звезды не говорят бесплатно с теми, кто не готов к истине</p>
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/95 backdrop-blur-xl animate-fadeIn" onClick={() => setShowPayOptions(false)}>
+              <div className="w-full max-w-md bg-[#070707] border-t border-white/10 rounded-t-[3rem] p-8 shadow-2xl" onClick={e => e.stopPropagation()}>
+                  <div className="w-12 h-1 bg-white/10 rounded-full mx-auto mb-8"></div>
+                  <h3 className="text-xl font-cinzel text-white text-center mb-10 uppercase tracking-[0.3em]">Ритуал Доступа</h3>
                   
-                  <div className="space-y-3">
-                      <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
-                          <button onClick={handleChannelAction} className="w-full flex items-center justify-between group active:scale-[0.98] transition-all">
+                  <div className="space-y-4">
+                      <div className="bg-white/5 border border-white/10 rounded-[1.5rem] p-5 space-y-4">
+                          <button onClick={() => { if(tg) tg.openTelegramLink(CHANNEL_URL); else window.open(CHANNEL_URL); }} className="w-full flex items-center justify-between group">
                               <div className="text-left">
-                                  <p className="text-[11px] font-cinzel text-gold tracking-widest uppercase">1. Подписаться на канал</p>
-                                  <p className="text-[8px] text-gray-500 uppercase mt-0.5 font-lato">Вступить в наш круг Этерии</p>
+                                  <p className="text-[12px] font-cinzel text-gold tracking-widest uppercase">1. Вступить в канал</p>
+                                  <p className="text-[8px] text-gray-500 uppercase mt-1">Оракул говорит только с верными</p>
                               </div>
-                              <span className="text-lg">📢</span>
+                              <span className="text-xl">📢</span>
                           </button>
-                          <div className="h-[1px] bg-white/5 w-full"></div>
+                          <div className="h-px bg-white/5"></div>
                           <button 
                             onClick={verifySubscription} 
                             disabled={isCheckingSub}
-                            className={`w-full py-3 rounded-xl border border-gold/30 font-cinzel text-[10px] uppercase tracking-widest transition-all ${isCheckingSub ? 'opacity-50' : 'bg-gold/10 text-gold active:scale-95'}`}
+                            className={`w-full py-4 rounded-xl font-cinzel text-[10px] uppercase tracking-[0.2em] transition-all ${isCheckingSub ? 'opacity-50' : 'bg-gold/10 text-gold border border-gold/30 active:scale-95'}`}
                           >
-                              {isCheckingSub ? 'Спрашиваю Звезды...' : '2. Проверить подписку и открыть'}
+                              {isCheckingSub ? 'Спрашиваю Звезды...' : '2. Подтвердить подписку'}
                           </button>
                       </div>
 
-                      <div className="flex items-center gap-2 py-1">
-                          <div className="h-[1px] flex-1 bg-white/5"></div>
-                          <span className="text-[8px] text-gray-600 font-cinzel uppercase tracking-[0.3em]">или</span>
-                          <div className="h-[1px] flex-1 bg-white/5"></div>
+                      <div className="flex items-center gap-4 py-2 opacity-20">
+                          <div className="h-px flex-1 bg-white"></div>
+                          <span className="text-[8px] font-cinzel uppercase">Или</span>
+                          <div className="h-px flex-1 bg-white"></div>
                       </div>
 
-                      <button onClick={() => { onSingleUnlock(); setShowPayOptions(false); }} className="w-full bg-white/5 border border-white/10 p-5 rounded-2xl flex items-center justify-between group active:scale-[0.98] transition-all">
+                      <button onClick={() => { onUnlockPremium(); setShowPayOptions(false); }} className="w-full bg-gold text-black p-5 rounded-2xl flex items-center justify-between active:scale-95 transition-all">
                           <div className="text-left">
-                              <p className="text-[11px] font-cinzel text-white tracking-widest uppercase">Разовый Доступ</p>
-                              <p className="text-[8px] text-gray-500 uppercase mt-0.5 font-lato">Открыть без подписок</p>
+                              <p className="text-[11px] font-cinzel font-bold tracking-widest uppercase">Путь Мастера</p>
+                              <p className="text-[8px] opacity-70 uppercase font-bold">Вечный доступ (199₽)</p>
                           </div>
-                          <span className="text-gold font-bold font-cinzel text-base">99₽</span>
-                      </button>
-
-                      <button onClick={() => { onUnlockPremium(); setShowPayOptions(false); }} className="w-full bg-gradient-to-r from-gold to-[#B8860B] p-5 rounded-2xl flex items-center justify-between shadow-[0_10px_40px_rgba(212,175,55,0.2)] group active:scale-[0.98] transition-all">
-                          <div className="text-left">
-                              <p className="text-[11px] font-cinzel text-black font-bold tracking-widest uppercase">Путь Мастера</p>
-                              <p className="text-[8px] text-black/70 uppercase mt-0.5 font-bold font-lato">Подписка на месяц</p>
-                          </div>
-                          <span className="text-black font-black font-cinzel text-base">199₽</span>
+                          <span className="text-xl">👑</span>
                       </button>
                   </div>
-                  <button onClick={() => setShowPayOptions(false)} className="w-full mt-6 text-[9px] text-gray-700 uppercase tracking-[0.4em] py-2 font-lato font-bold">Вернуться назад</button>
               </div>
           </div>
       )}
@@ -272,10 +233,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   );
 };
 
-const StatCard: React.FC<{ label: string; value: number; color: string; borderColor: string; textColor: string }> = ({ label, value, color, borderColor, textColor }) => (
-    <div className={`bg-gradient-to-b ${color} ${borderColor} border rounded-xl p-2.5 flex flex-col items-center justify-center gap-0.5 shadow-lg`}>
-        <span className="text-[8px] uppercase text-white/30 font-cinzel tracking-wider leading-none">{label}</span>
-        <span className={`text-[13px] sm:text-[14px] font-bold font-cinzel ${textColor}`}>{value}%</span>
+const StatCard: React.FC<{ label: string; value: number; color: string; textColor: string }> = ({ label, value, color, textColor }) => (
+    <div className={`bg-gradient-to-b ${color} to-black/20 border border-white/5 rounded-2xl p-3 flex flex-col items-center gap-1 shadow-inner`}>
+        <span className="text-[7px] uppercase text-white/30 font-cinzel tracking-widest">{label}</span>
+        <span className={`text-sm font-bold font-cinzel ${textColor}`}>{value}%</span>
     </div>
 );
 
