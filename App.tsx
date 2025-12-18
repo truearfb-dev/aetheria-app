@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppStage, UserProfile, AppData, DailyPrediction } from './types';
 import { getZodiacSign, generateDailyPrediction } from './utils/mystic';
-import { initTelegramApp, triggerNotification } from './services/telegram';
+import { initTelegramApp, triggerNotification, triggerHaptic } from './services/telegram';
 import { generateDailyHoroscope } from './services/geminiService';
 import { handlePayment } from './services/payment';
 import StarBackground from './components/StarBackground';
@@ -30,6 +30,7 @@ const App: React.FC = () => {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
       }
       setUserData(newData);
+      // Сначала генерируем базовое, потом ритуал обновит его через AI
       setPrediction(generateDailyPrediction(data.user!.zodiacSign));
       setStage(AppStage.DASHBOARD);
     }
@@ -108,7 +109,8 @@ const App: React.FC = () => {
   };
 
   const handleResetApp = () => {
-    if (window.confirm("Это сотрет ваши данные. Вы уверены?")) {
+    triggerHaptic('rigid');
+    if (window.confirm("Очистить астральный след? Это позволит начать новый путь.")) {
         localStorage.removeItem(STORAGE_KEY);
         setUserData(null);
         setPrediction(null);
@@ -127,6 +129,7 @@ const App: React.FC = () => {
       )}
       {stage === AppStage.DASHBOARD && userData && prediction && (
         <Dashboard 
+          key={prediction.text.substring(0, 20)} // Форсируем перерисовку при смене текста
           user={userData.user!} 
           prediction={prediction}
           isLocked={isLocked}
