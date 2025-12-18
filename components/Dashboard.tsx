@@ -1,112 +1,64 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { UserProfile, DailyPrediction } from '../types';
-import Paywall from './Paywall';
 import { getTelegramWebApp, triggerHaptic, triggerNotification } from '../services/telegram';
-import { askTheOracle } from '../services/geminiService';
 
 interface DashboardProps {
   user: UserProfile;
   prediction: DailyPrediction;
   isLocked: boolean;
-  oracleTokens: number;
+  visitCount: number;
   onUnlockPremium: () => void;
   onUnlockDaily: () => void;
-  onConsumeToken: () => boolean;
-  onBuyTokens: () => void;
+  onSingleUnlock: () => void;
   onReset: () => void;
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ 
-    user, prediction, isLocked, oracleTokens,
-    onUnlockPremium, onUnlockDaily, onConsumeToken, onBuyTokens, onReset 
+    user, prediction, isLocked, visitCount,
+    onUnlockPremium, onUnlockDaily, onSingleUnlock, onReset 
 }) => {
-  const tg = getTelegramWebApp();
-  const [oracleQuestion, setOracleQuestion] = useState('');
-  const [oracleAnswer, setOracleAnswer] = useState<string | null>(null);
-  const [isConsulting, setIsConsulting] = useState(false);
-  const [guideStep, setGuideStep] = useState(0); 
-  
-  const [showTokenModal, setShowTokenModal] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  // Get localized date
+  const [showPayOptions, setShowPayOptions] = useState(false);
   const todayDate = new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
-  const todaySimple = new Date().toLocaleDateString('ru-RU');
+  const tg = getTelegramWebApp();
 
-  useEffect(() => {
-    // Уменьшено до 2 секунд на каждый шаг (2000мс между переключениями)
-    const timer1 = setTimeout(() => { setGuideStep(1); triggerHaptic('light'); }, 500);
-    const timer2 = setTimeout(() => { setGuideStep(2); triggerHaptic('light'); }, 2500);
-    const timer3 = setTimeout(() => { setGuideStep(3); triggerHaptic('light'); }, 4500);
-    const timer4 = setTimeout(() => { setGuideStep(0); }, 6500);
+  // Prediction text split for preview
+  const paragraphs = prediction.text.split('\n').filter(p => p.trim() !== '');
+  const previewText = paragraphs[0] || "";
+  const remainingText = paragraphs.slice(1).join('\n\n');
 
-    return () => {
-        clearTimeout(timer1); clearTimeout(timer2);
-        clearTimeout(timer3); clearTimeout(timer4);
-    };
-  }, []);
-
-  const handleOracleConsult = async () => {
-    if (!oracleQuestion.trim()) {
-        inputRef.current?.focus();
-        return;
+  const handleUnlockClick = () => {
+    triggerHaptic('medium');
+    if (visitCount <= 1) {
+        // First time - always channel subscribe
+        onUnlockDaily();
+    } else {
+        // Returning user - show pay modal
+        setShowPayOptions(true);
     }
-    if (oracleTokens <= 0) {
-        triggerNotification('warning');
-        setShowTokenModal(true);
-        return;
-    }
-    if (!onConsumeToken()) return;
-
-    triggerHaptic('heavy');
-    setIsConsulting(true);
-    setOracleAnswer(null);
-    const answer = await askTheOracle(oracleQuestion, user.zodiacSign, user.name);
-    triggerNotification('success');
-    setOracleAnswer(answer);
-    setIsConsulting(false);
-  };
-
-  const highlightClass = (step: number) => {
-      if (guideStep !== step) return "transition-all duration-700";
-      return "transition-all duration-700 scale-[1.02] z-30 ring-2 ring-gold shadow-[0_0_30px_rgba(212,175,55,0.6)]";
-  };
-
-  const oracleHighlightClass = (step: number) => {
-    if (guideStep !== step) return "transition-all duration-700";
-    return "transition-all duration-700 scale-[1.02] z-30 ring-2 ring-neon shadow-[0_0_30px_rgba(176,38,255,0.5)]";
   };
 
   return (
     <div className="relative z-10 p-4 max-w-lg mx-auto pb-20 animate-fadeIn h-screen flex flex-col justify-between overflow-hidden">
       
-      {guideStep > 0 && (
-          <div className="fixed inset-0 bg-black/60 z-20 pointer-events-none animate-fadeIn transition-opacity duration-1000"></div>
-      )}
-
       <div>
         {/* 1. HEADER */}
-        <header className="flex justify-between items-start mb-3 border-b border-white/5 pb-2">
+        <header className="flex justify-between items-start mb-4 border-b border-white/5 pb-2">
             <div>
-                <h1 className="text-lg font-cinzel text-white leading-tight uppercase tracking-widest">Этерия</h1>
+                <h1 className="text-xl font-cinzel text-white leading-tight uppercase tracking-widest">Этерия</h1>
                 <div className="flex items-center gap-1.5 mt-0.5">
                    <div className="w-1.5 h-1.5 rounded-full bg-gold animate-pulse"></div>
                    <p className="text-[10px] text-gold/80 font-cinzel uppercase tracking-wider">Сегодня: {todayDate}</p>
                 </div>
             </div>
-            <div className="flex flex-col items-end gap-1">
-                <div className="flex items-center gap-2 bg-white/5 px-3 py-1 rounded-full border border-white/10" onClick={() => setShowTokenModal(true)}>
-                    <span className="text-xs font-bold text-neon">{oracleTokens}</span>
-                    <span className="text-[9px] uppercase text-gray-400">🔮</span>
-                    <button className="ml-1 w-3 h-3 rounded-full bg-neon/20 flex items-center justify-center text-[8px] text-neon">+</button>
-                </div>
-                <p className="text-[8px] text-gray-600 font-lato uppercase">{user.name} • {user.zodiacSign}</p>
+            <div className="text-right">
+                <p className="text-[10px] text-white font-cinzel uppercase">{user.zodiacSign}</p>
+                <p className="text-[8px] text-gray-500 font-lato uppercase">{user.name}</p>
             </div>
         </header>
 
-        {/* 2. DAILY CARD (HORIZONTAL) */}
-        <section className={`mb-3 w-full ${highlightClass(1)}`} onClick={() => triggerHaptic('light')}>
-            <div className="relative w-full h-[85px] bg-gradient-to-r from-[#1a1a1a] to-black rounded-xl border border-gold/20 flex flex-row items-center p-3 gap-4 overflow-hidden shadow-xl">
+        {/* 2. DAILY CARD */}
+        <section className="mb-4 w-full">
+            <div className="relative w-full h-[80px] bg-gradient-to-r from-[#1a1a1a] to-black rounded-xl border border-gold/20 flex flex-row items-center p-3 gap-4 overflow-hidden shadow-xl">
                 <div className="absolute -left-4 top-0 w-24 h-full bg-gold/5 blur-2xl rounded-full"></div>
                 <div className="relative z-10 text-4xl drop-shadow-[0_0_15px_rgba(212,175,55,0.3)]">
                     {prediction.tarotCard.icon}
@@ -114,109 +66,59 @@ const Dashboard: React.FC<DashboardProps> = ({
                 <div className="relative z-10 flex flex-col justify-center flex-1">
                     <div className="text-[7px] text-gold/40 uppercase tracking-[0.4em] font-cinzel mb-0.5">Карта Дня</div>
                     <h3 className="text-gold font-cinzel text-sm leading-tight">{prediction.tarotCard.name}</h3>
-                    <p className="text-[9px] text-gray-500 font-lato line-clamp-1 italic">
+                    <p className="text-[9px] text-gray-400 font-lato line-clamp-1 italic">
                         {prediction.tarotCard.meaning}
                     </p>
                 </div>
             </div>
         </section>
 
-        {/* 3. ORACLE */}
-        <section className={`mb-3 relative ${oracleHighlightClass(2)}`}>
-            <div className="relative bg-[#0F0518]/90 border border-neon/20 rounded-xl p-3 backdrop-blur-xl">
-                <div className="flex items-center gap-2 mb-2">
-                    <span className="text-sm">👁️</span>
-                    <h3 className="font-cinzel text-white text-[9px] tracking-wide uppercase">Спроси Звезды</h3>
-                </div>
-                {!oracleAnswer ? (
-                    <div className="relative">
-                        <input 
-                            ref={inputRef}
-                            type="text" 
-                            placeholder="Что меня ждет сегодня?" 
-                            className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-[11px] text-white focus:border-neon focus:outline-none transition-all placeholder:text-gray-600 font-lato"
-                            value={oracleQuestion}
-                            onChange={(e) => setOracleQuestion(e.target.value)}
-                        />
-                        <button 
-                            onClick={handleOracleConsult}
-                            disabled={isConsulting}
-                            className="absolute right-1 top-1 bottom-1 bg-neon text-white rounded-md px-2 font-cinzel text-[9px] uppercase transition-all disabled:opacity-50"
-                        >
-                            {isConsulting ? "..." : "↗"}
-                        </button>
-                    </div>
-                ) : (
-                    <div className="animate-fadeIn">
-                        <div className="mb-2 p-2 bg-white/5 rounded-lg border border-neon/20 text-[10px] text-white italic leading-relaxed">
-                            "{oracleAnswer}"
-                        </div>
-                        <button 
-                            onClick={() => { triggerHaptic('light'); setOracleAnswer(null); setOracleQuestion(''); }}
-                            className="w-full py-1 text-[8px] text-neon border border-neon/30 rounded-md uppercase font-cinzel"
-                        >
-                            Еще вопрос
-                        </button>
-                    </div>
-                )}
-            </div>
-        </section>
-
-        {/* 4. PERSONAL PROPHECY (PREMIUM HIGHLIGHT) */}
-        <section className={`mb-3 ${highlightClass(3)} rounded-xl relative group`}>
-            {/* Glow effect */}
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-gold/0 via-gold/40 to-gold/0 rounded-xl blur opacity-30 group-hover:opacity-100 transition duration-1000"></div>
+        {/* 3. MAIN PREDICTION BLOCK */}
+        <section className="relative group">
+            <div className="absolute -inset-0.5 bg-gradient-to-b from-gold/20 to-transparent rounded-2xl blur opacity-30 group-hover:opacity-50 transition duration-1000"></div>
             
-            <div className="flex items-center justify-between mb-2 px-1">
-                <h2 className="font-cinzel text-gold text-[10px] font-bold tracking-[0.4em] uppercase drop-shadow-[0_0_10px_rgba(212,175,55,0.5)]">
-                    ✧ ЛИЧНОЕ ПРОРОЧЕСТВО ✧
-                </h2>
-                <span className="text-[8px] text-gray-500 font-lato uppercase tracking-widest">{todaySimple}</span>
-            </div>
-            
-            <div className="relative min-h-[140px] rounded-xl overflow-hidden border border-gold/40 shadow-[inset_0_0_20px_rgba(212,175,55,0.1)] bg-black">
-                <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-20"></div>
-                
-                <div className={`relative p-5 h-full flex flex-col items-center justify-center transition-all duration-1000 ${isLocked ? 'blur-lg opacity-30' : 'opacity-100'}`}>
-                    <p className="font-cinzel text-center text-sm text-gray-200 leading-7 italic">
-                        {isLocked ? "Ваша судьба скрыта за пеленой звезд..." : `"${prediction.text}"`}
-                    </p>
-                    {!isLocked && (
-                        <div className="mt-4 pt-3 border-t border-white/5 w-full text-center">
-                            <p className="text-[9px] text-gold/40 font-cinzel tracking-widest uppercase italic">Сила этого пророчества истекает в полночь</p>
-                        </div>
-                    )}
-                </div>
-
-                {isLocked && (
-                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/40 backdrop-blur-[1px]">
-                        <div className="mb-4 px-4 py-1 bg-red-600/20 border border-red-500/40 rounded-full animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.2)]">
-                            <span className="text-red-400 font-cinzel text-[10px] font-bold tracking-widest uppercase">
-                                {prediction.teaser || "⚠️ ТРЕВОЖНЫЙ ЗНАК"}
-                            </span>
-                        </div>
-
-                        <button 
-                            onClick={onUnlockPremium}
-                            className="bg-gradient-to-b from-gold to-[#B8860B] text-black font-cinzel font-bold text-xs py-3.5 px-10 rounded-full shadow-[0_10px_25px_rgba(184,134,11,0.5)] active:scale-95 transition-transform flex items-center gap-3"
-                        >
-                            <span>СНЯТЬ ПЕЧАТЬ</span>
-                            <span className="bg-black/20 px-2 py-0.5 rounded text-[10px]">199₽</span>
-                        </button>
+            <div className="relative bg-black/40 border border-white/10 rounded-2xl overflow-hidden min-h-[320px] flex flex-col">
+                <div className="p-5 flex-1 flex flex-col">
+                    <h2 className="font-cinzel text-center text-gold text-[10px] font-bold tracking-[0.5em] mb-4 uppercase">✧ ПРОРОЧЕСТВО СУДЬБЫ ✧</h2>
+                    
+                    {/* Content Area */}
+                    <div className="relative overflow-hidden flex-1">
+                        {/* Always visible first paragraph */}
+                        <p className="text-gray-200 font-cinzel text-sm leading-relaxed text-center mb-4 italic px-2">
+                            {previewText}
+                        </p>
                         
-                        <div className="mt-4 flex flex-col items-center gap-2">
-                             <button onClick={onUnlockDaily} className="text-[9px] text-gray-500 underline decoration-gray-700 hover:text-white transition-colors uppercase tracking-widest">
-                                Открыть за подписку
-                            </button>
-                            <p className="text-[7px] text-gray-700 uppercase tracking-tighter italic">Только для {todayDate}</p>
+                        {/* Blurred rest of content */}
+                        <div className={`transition-all duration-1000 ${isLocked ? 'blur-md select-none' : 'blur-0'}`}>
+                            <p className="text-gray-300 font-lato text-sm leading-relaxed text-center whitespace-pre-wrap">
+                                {remainingText}
+                            </p>
                         </div>
+
+                        {/* Lock Overlay */}
+                        {isLocked && (
+                            <div className="absolute inset-x-0 bottom-0 top-[40px] flex flex-col items-center justify-center bg-gradient-to-t from-black via-black/40 to-transparent pt-12">
+                                <button 
+                                    onClick={handleUnlockClick}
+                                    className="bg-gradient-to-b from-gold to-[#B8860B] text-black font-cinzel font-bold text-xs py-4 px-10 rounded-full shadow-[0_10px_30px_rgba(184,134,11,0.6)] active:scale-95 transition-all flex flex-col items-center"
+                                >
+                                    <span className="tracking-widest">ПОСМОТРЕТЬ ПРЕДСКАЗАНИЕ</span>
+                                    <span className="text-[8px] mt-1 opacity-80 uppercase">
+                                        {visitCount <= 1 ? "Бесплатно за подписку" : "Открыть путь звезд"}
+                                    </span>
+                                </button>
+                                <p className="mt-6 text-[8px] text-gray-500 uppercase tracking-widest text-center animate-pulse">
+                                    Сила пророчества активна только сегодня
+                                </p>
+                            </div>
+                        )}
                     </div>
-                )}
+                </div>
             </div>
         </section>
       </div>
 
-      {/* 5. STATS (BIG CARDS) */}
+      {/* 4. STATS (UNCHANGED) */}
       <div className="w-full">
         <div className="grid grid-cols-3 gap-3 mb-4">
             <StatCard label="Карма" value={prediction.karma} color="from-purple-600/40 to-purple-900/40" borderColor="border-purple-500/30" textColor="text-purple-300" />
@@ -224,28 +126,46 @@ const Dashboard: React.FC<DashboardProps> = ({
             <StatCard label="Любовь" value={prediction.love} color="from-pink-600/40 to-pink-900/40" borderColor="border-pink-500/30" textColor="text-pink-300" />
         </div>
 
-        <div className="flex flex-col items-center gap-2">
-            <p className="text-[7px] text-gray-700 font-cinzel uppercase tracking-[0.2em] animate-pulse">Звезды обновятся в полночь</p>
-            <button onClick={onReset} className="w-full text-center text-[7px] text-gray-800 uppercase tracking-[0.5em] font-cinzel py-1 border-t border-white/5">
-                Сброс астральной связи
-            </button>
-        </div>
+        <button onClick={onReset} className="w-full text-center text-[7px] text-gray-800 uppercase tracking-[0.5em] font-cinzel py-1 border-t border-white/5 opacity-40">
+            Сброс астральной связи
+        </button>
       </div>
 
-      {/* TOKEN MODAL */}
-      {showTokenModal && (
-          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/80 backdrop-blur-sm animate-fadeIn" onClick={() => setShowTokenModal(false)}>
-              <div className="w-full max-w-sm bg-[#121212] border-t border-white/10 rounded-t-2xl p-6" onClick={e => e.stopPropagation()}>
-                  <div className="flex justify-between items-center mb-4">
-                      <h3 className="text-lg font-cinzel text-neon uppercase">Энергия</h3>
-                      <button onClick={() => setShowTokenModal(false)} className="text-gray-500 text-2xl">&times;</button>
-                  </div>
-                  <div className="space-y-3">
-                      <button onClick={() => { onBuyTokens(); setShowTokenModal(false); }} className="w-full bg-neon text-white font-cinzel py-4 rounded-xl flex items-center justify-between px-6 active:scale-95 transition-transform">
-                          <span className="text-sm font-bold uppercase tracking-widest">5 Ответов</span>
-                          <span className="text-lg font-bold">99₽</span>
+      {/* PAYMENT MODAL (Only for returning users) */}
+      {showPayOptions && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/90 backdrop-blur-sm animate-fadeIn" onClick={() => setShowPayOptions(false)}>
+              <div className="w-full max-w-sm bg-[#121212] border-t border-white/20 rounded-t-3xl p-8" onClick={e => e.stopPropagation()}>
+                  <div className="w-12 h-1.5 bg-white/10 rounded-full mx-auto mb-6"></div>
+                  <h3 className="text-xl font-cinzel text-white text-center mb-2 uppercase tracking-widest">Разблокировать Судьбу</h3>
+                  <p className="text-gray-500 text-xs text-center mb-8 font-lato">Выберите ваш путь получения пророчеств</p>
+                  
+                  <div className="space-y-4">
+                      <button 
+                        onClick={() => { onSingleUnlock(); setShowPayOptions(false); }}
+                        className="w-full bg-white/5 border border-white/10 p-5 rounded-2xl flex items-center justify-between hover:bg-white/10 transition-all group"
+                      >
+                          <div className="text-left">
+                              <p className="text-sm font-cinzel text-white">Разовое Откровение</p>
+                              <p className="text-[10px] text-gray-500 uppercase tracking-tighter">На 1 день</p>
+                          </div>
+                          <span className="text-gold font-bold font-cinzel text-lg">99₽</span>
+                      </button>
+
+                      <button 
+                        onClick={() => { onUnlockPremium(); setShowPayOptions(false); }}
+                        className="w-full bg-gradient-to-r from-gold to-yellow-600 p-5 rounded-2xl flex items-center justify-between shadow-[0_10px_20px_rgba(212,175,55,0.2)] hover:scale-[1.02] transition-all"
+                      >
+                          <div className="text-left">
+                              <p className="text-sm font-cinzel text-black font-bold">Путь Мастера</p>
+                              <p className="text-[10px] text-black/60 uppercase font-bold">Подписка на месяц</p>
+                          </div>
+                          <span className="text-black font-black font-cinzel text-lg">199₽</span>
                       </button>
                   </div>
+                  
+                  <button onClick={() => setShowPayOptions(false)} className="w-full mt-6 text-[10px] text-gray-600 uppercase tracking-widest py-2">
+                      Закрыть
+                  </button>
               </div>
           </div>
       )}
@@ -256,10 +176,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 const StatCard: React.FC<{ label: string; value: number; color: string; borderColor: string; textColor: string }> = ({ label, value, color, borderColor, textColor }) => (
     <div className={`bg-gradient-to-b ${color} ${borderColor} border rounded-xl p-3 flex flex-col items-center justify-center gap-1 shadow-lg`}>
         <span className="text-[8px] uppercase text-gray-400 font-cinzel tracking-widest">{label}</span>
-        <span className={`text-xl font-bold font-cinzel ${textColor}`}>{value}%</span>
-        <div className="w-full h-1 bg-black/40 rounded-full mt-1 overflow-hidden">
-            <div className={`h-full bg-white/40`} style={{ width: `${value}%` }}></div>
-        </div>
+        <span className={`text-lg font-bold font-cinzel ${textColor}`}>{value}%</span>
     </div>
 );
 

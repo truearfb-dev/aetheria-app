@@ -8,9 +8,9 @@ export interface AppData {
   user: UserProfile | null;
   visitCount: number;
   lastVisitDate: string; // YYYY-MM-DD
-  isPremium: boolean;
+  isPremium: boolean; // Monthly subscription active
   isUnlockedToday: boolean;
-  oracleTokens: number; // New: Currency for asking AI questions
+  oracleTokens: number; 
 }
 
 export enum AppStage {
@@ -33,10 +33,9 @@ export interface DailyPrediction {
   luckyColor: string;
   luckyColorHex: string;
   tarotCard: TarotCard;
-  teaser: string; // NEW: The hook headline (e.g. "⚠️ Warning: Betrayal")
+  teaser: string; 
 }
 
-// Telegram WebApp Types (Simplified)
 export interface TelegramWebApp {
   ready: () => void;
   expand: () => void;
@@ -56,7 +55,6 @@ export interface TelegramWebApp {
     setText: (text: string) => void;
   };
   openTelegramLink: (url: string) => void;
-  // invoiceSlug is the URL returned by createInvoiceLink
   openInvoice: (invoiceSlug: string, callback?: (status: 'paid' | 'cancelled' | 'failed' | 'pending') => void) => void;
   initDataUnsafe?: {
     user?: {

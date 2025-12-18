@@ -17,29 +17,18 @@ const App: React.FC = () => {
   const [prediction, setPrediction] = useState<DailyPrediction | null>(null);
 
   useEffect(() => {
-    // Initialize Telegram WebApp
     initTelegramApp();
-
-    // Load Data
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const data: AppData = JSON.parse(saved);
       const today = new Date().toDateString();
-      
       let newData = { ...data };
-
-      // New Day Logic
       if (data.lastVisitDate !== today) {
         newData.visitCount += 1;
         newData.lastVisitDate = today;
         newData.isUnlockedToday = false;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
       }
-      
-      if (newData.oracleTokens === undefined) {
-          newData.oracleTokens = 1;
-      }
-      
       setUserData(newData);
       setPrediction(generateDailyPrediction(data.user!.zodiacSign));
       setStage(AppStage.DASHBOARD);
@@ -48,21 +37,15 @@ const App: React.FC = () => {
 
   const handleOnboardingComplete = (name: string, dateStr: string) => {
     const zodiac = getZodiacSign(dateStr);
-    const userProfile: UserProfile = {
-      name,
-      birthDate: dateStr,
-      zodiacSign: zodiac
-    };
-
+    const userProfile: UserProfile = { name, birthDate: dateStr, zodiacSign: zodiac };
     const newData: AppData = {
       user: userProfile,
       visitCount: 1,
       lastVisitDate: new Date().toDateString(),
       isPremium: false,
       isUnlockedToday: false,
-      oracleTokens: 1 
+      oracleTokens: 0
     };
-
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
     setUserData(newData);
     setPrediction(generateDailyPrediction(zodiac));
@@ -91,65 +74,46 @@ const App: React.FC = () => {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   };
 
-  // --- PAYMENT LOGIC ---
-
-  // 1. Buy Premium (Rubles via Payment Provider)
   const handleUnlockPremium = () => {
     if (!userData) return;
-
     handlePayment('premium_lifetime', 
         () => {
-            // Success Callback
-            const updatedData = { ...userData, isPremium: true };
-            saveUserData(updatedData);
+            saveUserData({ ...userData, isPremium: true });
             triggerNotification('success');
-            // В реальном приложении здесь можно показать красивый модал успеха
         },
-        () => {
-            // Cancel/Fail Callback
-            triggerNotification('error');
-        }
+        () => triggerNotification('error')
     );
   };
 
-  // 2. Buy Tokens (Rubles via Payment Provider)
-  const handleBuyTokens = () => {
+  const handleSingleUnlock = () => {
     if (!userData) return;
-
     handlePayment('tokens_pack_small',
         () => {
-            const updatedData = { ...userData, oracleTokens: userData.oracleTokens + 5 };
-            saveUserData(updatedData);
+            saveUserData({ ...userData, isUnlockedToday: true });
             triggerNotification('success');
         },
-        () => {
-            triggerNotification('error');
-        }
+        () => triggerNotification('error')
     );
   };
-
-  // ---------------------
 
   const handleUnlockDaily = () => {
     if (userData) {
-        const updatedData = { ...userData, isUnlockedToday: true };
-        saveUserData(updatedData);
-        triggerNotification('success');
+        const CHANNEL_URL = "https://t.me/durov"; 
+        const tg = (window as any).Telegram?.WebApp;
+        if (tg) {
+            tg.openTelegramLink(CHANNEL_URL);
+            setTimeout(() => {
+                if (window.confirm("Вы подписались на канал?")) {
+                    saveUserData({ ...userData, isUnlockedToday: true });
+                    triggerNotification('success');
+                }
+            }, 2000);
+        }
     }
   };
 
-  const handleConsumeToken = () => {
-      if (userData && userData.oracleTokens > 0) {
-          const updatedData = { ...userData, oracleTokens: userData.oracleTokens - 1 };
-          saveUserData(updatedData);
-          return true;
-      }
-      return false;
-  };
-
   const handleResetApp = () => {
-    if (window.confirm("Вы уверены? Это сотрет ваши данные и прогресс.")) {
-        triggerNotification('warning');
+    if (window.confirm("Это сотрет ваши данные. Вы уверены?")) {
         localStorage.removeItem(STORAGE_KEY);
         setUserData(null);
         setPrediction(null);
@@ -157,38 +121,24 @@ const App: React.FC = () => {
     }
   };
 
-  // Logic: Block immediately if not premium and not unlocked today.
-  // We removed 'userData.visitCount > 3' to force the paywall from Day 1.
-  const isLocked = userData 
-    ? !userData.isPremium && !userData.isUnlockedToday 
-    : false;
+  const isLocked = userData ? !userData.isPremium && !userData.isUnlockedToday : false;
 
   return (
     <main className="min-h-screen w-full relative overflow-hidden bg-void">
       <StarBackground />
-      
-      {stage === AppStage.ONBOARDING && (
-        <Onboarding onComplete={handleOnboardingComplete} />
-      )}
-
+      {stage === AppStage.ONBOARDING && <Onboarding onComplete={handleOnboardingComplete} />}
       {stage === AppStage.RITUAL && userData && (
-        <Ritual 
-            zodiac={userData.user!.zodiacSign} 
-            onStart={handleRitualStart}
-            onComplete={handleRitualComplete} 
-        />
+        <Ritual zodiac={userData.user!.zodiacSign} onStart={handleRitualStart} onComplete={handleRitualComplete} />
       )}
-
       {stage === AppStage.DASHBOARD && userData && prediction && (
         <Dashboard 
           user={userData.user!} 
           prediction={prediction}
-          isLocked={isLocked} 
-          oracleTokens={userData.oracleTokens}
+          isLocked={isLocked}
+          visitCount={userData.visitCount}
           onUnlockPremium={handleUnlockPremium}
           onUnlockDaily={handleUnlockDaily}
-          onConsumeToken={handleConsumeToken}
-          onBuyTokens={handleBuyTokens}
+          onSingleUnlock={handleSingleUnlock}
           onReset={handleResetApp}
         />
       )}
