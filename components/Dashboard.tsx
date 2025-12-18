@@ -27,11 +27,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const handleUnlockClick = () => {
     triggerHaptic('medium');
-    if (visitCount <= 1) {
-        onUnlockDaily();
-    } else {
-        setShowPayOptions(true);
-    }
+    // Временно убираем условие visitCount <= 1, чтобы всегда тестировать оплату
+    setShowPayOptions(true);
   };
 
   return (
@@ -112,7 +109,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                                             
                                             <span className="text-[10px] tracking-[0.1em]">ПОСМОТРЕТЬ ПОЛНОСТЬЮ</span>
                                             <span className="text-[7px] mt-1.5 opacity-60 uppercase font-lato font-normal tracking-widest">
-                                                {visitCount <= 1 ? "Бесплатно за подписку" : "Открыть путь звезд"}
+                                                Раскрыть тайны звезд
                                             </span>
                                         </button>
 
