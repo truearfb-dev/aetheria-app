@@ -33,7 +33,7 @@ const Dashboard: React.FC<DashboardProps> = ({
     <div className="relative z-10 p-3 max-w-lg mx-auto h-[100dvh] flex flex-col justify-between overflow-hidden animate-fadeIn select-none">
       
       <div className="flex-1 flex flex-col min-h-0">
-        {/* 1. HEADER - Slightly more compact */}
+        {/* 1. HEADER */}
         <header className="flex justify-between items-start mb-1.5 border-b border-white/5 pb-1 shrink-0">
             <div className="flex flex-col">
                 <h1 className="text-base font-cinzel text-white leading-tight uppercase tracking-widest">Этерия</h1>
@@ -48,7 +48,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
         </header>
 
-        {/* 2. DAILY CARD - More compact */}
+        {/* 2. DAILY CARD */}
         <section className="mb-1.5 shrink-0">
             <div className="relative w-full h-[40px] bg-white/5 rounded-lg border border-white/10 flex items-center px-4 gap-3">
                 <span className="text-lg shrink-0">{prediction.tarotCard.icon}</span>
@@ -68,14 +68,20 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <div className="relative flex-1 flex flex-col overflow-hidden">
                         {/* THE HOOK (Clear Text) */}
                         <div className="relative z-10 shrink-0 mb-1">
-                           <p className="text-white font-cinzel text-[14px] leading-[1.5] text-center italic px-1 drop-shadow-sm">
+                           <p className="text-white font-cinzel text-[14px] leading-[1.6] text-center italic px-1 drop-shadow-sm">
                                 {introText}
+                                {isLocked && (
+                                    <span className="inline-block ml-1">
+                                        <span className="text-gold">...</span>
+                                        <span className="inline-block ml-2 animate-bounce text-gold not-italic">↓</span>
+                                    </span>
+                                )}
                             </p>
                         </div>
 
                         {/* THE REVEAL (Blurred or Clear Content) */}
-                        <div className="relative flex-1 overflow-hidden">
-                            <div className={`transition-all duration-1000 h-full ${isLocked ? 'blur-[3.5px] opacity-30 scale-[1.01] tracking-tighter' : 'blur-0 opacity-100 overflow-y-auto pt-2'}`}>
+                        <div className="relative flex-1 overflow-hidden mt-2">
+                            <div className={`transition-all duration-1000 h-full ${isLocked ? 'blur-[5px] opacity-30 scale-[1.01] tracking-tighter' : 'blur-0 opacity-100 overflow-y-auto pt-2'}`}>
                                 <p className="text-gray-100 font-lato text-[12px] leading-[1.8] text-center whitespace-pre-wrap px-3 italic pb-20">
                                     {mainText || "..."}
                                     {isLocked && (
@@ -86,14 +92,13 @@ const Dashboard: React.FC<DashboardProps> = ({
 
                             {/* LOCK OVERLAY */}
                             {isLocked && (
-                                <div className="absolute inset-0 flex flex-col items-center justify-center z-20">
-                                    {/* Мягкий градиентный переход для глубины */}
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent"></div>
+                                <div className="absolute inset-0 flex flex-col items-center justify-start z-20">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
                                     
-                                    <div className="relative z-30 w-full px-6 flex flex-col items-center gap-4">
+                                    <div className="relative z-30 w-full px-6 flex flex-col items-center gap-4 mt-8">
                                         <button 
                                             onClick={handleUnlockClick}
-                                            className="group relative w-full max-w-[260px] bg-gradient-to-b from-gold via-gold to-[#B8860B] text-black font-cinzel font-bold py-4 rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.8)] active:scale-95 transition-all flex flex-col items-center overflow-hidden border border-white/40"
+                                            className="group relative w-full max-w-[260px] bg-gradient-to-b from-gold via-gold to-[#B8860B] text-black font-cinzel font-bold py-4 rounded-full shadow-[0_20px_50px_rgba(0,0,0,1)] active:scale-95 transition-all flex flex-col items-center overflow-hidden border border-white/40"
                                         >
                                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-1000"></div>
                                             <span className="text-[11px] tracking-[0.15em] uppercase drop-shadow-sm leading-none pt-1">Раскрыть Откровение</span>
@@ -169,7 +174,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 const StatCard: React.FC<{ label: string; value: number; color: string; borderColor: string; textColor: string }> = ({ label, value, color, borderColor, textColor }) => (
     <div className={`bg-gradient-to-b ${color} ${borderColor} border rounded-xl p-2.5 flex flex-col items-center justify-center gap-0.5 shadow-lg`}>
         <span className="text-[8px] uppercase text-white/30 font-cinzel tracking-wider leading-none">{label}</span>
-        <span className={`text-[11px] font-bold font-cinzel ${textColor}`}>{value}%</span>
+        <span className={`text-[13px] sm:text-[14px] font-bold font-cinzel ${textColor}`}>{value}%</span>
     </div>
 );
 
