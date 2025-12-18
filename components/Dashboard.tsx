@@ -34,10 +34,11 @@ const Dashboard: React.FC<DashboardProps> = ({
   const todaySimple = new Date().toLocaleDateString('ru-RU');
 
   useEffect(() => {
+    // Уменьшено до 2 секунд на каждый шаг (2000мс между переключениями)
     const timer1 = setTimeout(() => { setGuideStep(1); triggerHaptic('light'); }, 500);
-    const timer2 = setTimeout(() => { setGuideStep(2); triggerHaptic('light'); }, 3500);
-    const timer3 = setTimeout(() => { setGuideStep(3); triggerHaptic('light'); }, 6500);
-    const timer4 = setTimeout(() => { setGuideStep(0); }, 9500);
+    const timer2 = setTimeout(() => { setGuideStep(2); triggerHaptic('light'); }, 2500);
+    const timer3 = setTimeout(() => { setGuideStep(3); triggerHaptic('light'); }, 4500);
+    const timer4 = setTimeout(() => { setGuideStep(0); }, 6500);
 
     return () => {
         clearTimeout(timer1); clearTimeout(timer2);
