@@ -68,19 +68,19 @@ const Dashboard: React.FC<DashboardProps> = ({
                     <div className="relative flex-1 flex flex-col overflow-hidden">
                         {/* THE HOOK (Clear Text) */}
                         <div className="relative z-10 shrink-0">
-                           <p className="text-white font-cinzel text-[14px] leading-[1.6] text-center italic px-1">
+                           <p className="text-white font-cinzel text-[15px] leading-[1.6] text-center italic px-1 drop-shadow-sm">
                                 {introText}
                             </p>
                         </div>
 
                         {/* THE REVEAL (Blurred or Clear Content) */}
-                        <div className="relative flex-1 overflow-hidden mt-1">
-                            <div className={`transition-all duration-1000 h-full ${isLocked ? 'blur-[8px] opacity-50 scale-[1.01]' : 'blur-0 opacity-100 overflow-y-auto pt-2'}`}>
-                                <p className="text-gray-300 font-lato text-xs leading-[1.8] text-center whitespace-pre-wrap px-4 italic pb-12">
+                        <div className="relative flex-1 overflow-hidden mt-2">
+                            <div className={`transition-all duration-1000 h-full ${isLocked ? 'blur-[5px] opacity-40 scale-[1.02] tracking-tight' : 'blur-0 opacity-100 overflow-y-auto pt-2'}`}>
+                                <p className="text-gray-200 font-lato text-[13px] leading-[1.8] text-center whitespace-pre-wrap px-4 italic pb-20">
                                     {mainText || "..."}
-                                    {/* Если текста мало, добавляем заблюренный "хвост" для объема */}
-                                    {isLocked && mainText.length < 200 && (
-                                        "\n\nВаш путь пересекается с энергией Марса. События, которые начнутся в ближайшие часы, изменят ваше восприятие близости. Будьте готовы услышать правду, которую от вас скрывали долгие месяцы. Это не конец, а лишь начало нового цикла. Звезды шепчут о финансовой независимости, которая придет через человека из прошлого."
+                                    {/* Наполнитель для визуальной густоты заблюренного текста */}
+                                    {isLocked && (
+                                        "\n\nВаша внутренняя энергия сейчас резонирует с восьмым домом. Это означает, что тайное скоро станет явным, и вы не сможете больше игнорировать знаки, которые Вселенная посылает вам через сны и случайные встречи. Финансовый поток заблокирован старой обидой. Вам нужно отпустить человека, который больше не является частью вашего будущего. Посмотрите в зеркало и увидьте там не просто отражение, а воина, готового к великой трансформации. Звезды обещают поддержку, но первый шаг за вами."
                                     )}
                                 </p>
                             </div>
@@ -88,25 +88,26 @@ const Dashboard: React.FC<DashboardProps> = ({
                             {/* LOCK OVERLAY */}
                             {isLocked && (
                                 <div className="absolute inset-0 flex flex-col items-center justify-start z-20">
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/10 to-transparent"></div>
+                                    {/* Тонкий градиент чтобы текст снизу "просвечивал" */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-60"></div>
                                     
-                                    <div className="relative z-30 w-full px-6 flex flex-col items-center gap-6 mt-10">
+                                    <div className="relative z-30 w-full px-6 flex flex-col items-center gap-6 mt-12">
                                         <button 
                                             onClick={handleUnlockClick}
-                                            className="group relative w-full max-w-[240px] bg-gradient-to-b from-gold to-[#B8860B] text-black font-cinzel font-bold py-4 rounded-full shadow-[0_20px_60px_rgba(0,0,0,1)] active:scale-95 transition-all flex flex-col items-center overflow-hidden border border-white/30"
+                                            className="group relative w-full max-w-[260px] bg-gradient-to-b from-gold via-gold to-[#B8860B] text-black font-cinzel font-bold py-5 rounded-full shadow-[0_25px_50px_rgba(0,0,0,1)] active:scale-95 transition-all flex flex-col items-center overflow-hidden border border-white/40"
                                         >
-                                            <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
-                                            <span className="text-[10px] tracking-[0.2em] uppercase">Раскрыть Откровение</span>
-                                            <span className="text-[6px] mt-1 opacity-60 uppercase font-lato font-normal tracking-[0.2em]">Узнать продолжение</span>
+                                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-150%] group-hover:translate-x-[150%] transition-transform duration-1000"></div>
+                                            <span className="text-[11px] tracking-[0.2em] uppercase drop-shadow-sm">Раскрыть Откровение</span>
+                                            <span className="text-[9px] mt-1.5 opacity-95 uppercase font-lato font-bold tracking-[0.15em] border-t border-black/10 pt-1 w-3/4 text-center">Узнать продолжение</span>
                                         </button>
 
-                                        <div className="flex flex-col items-center gap-1.5 opacity-90">
+                                        <div className="flex flex-col items-center gap-2 opacity-100">
                                             <div className="flex items-center gap-4">
-                                                <div className="h-px w-8 bg-gold/40"></div>
-                                                <span className="text-[9px] text-gold font-cinzel animate-pulse">✦</span>
-                                                <div className="h-px w-8 bg-gold/40"></div>
+                                                <div className="h-[1px] w-10 bg-gold/50"></div>
+                                                <span className="text-[10px] text-gold font-cinzel animate-pulse">✦</span>
+                                                <div className="h-[1px] w-10 bg-gold/50"></div>
                                             </div>
-                                            <p className="text-[9px] text-white/90 uppercase tracking-[0.3em] font-lato text-center font-bold drop-shadow-lg">
+                                            <p className="text-[10px] text-white uppercase tracking-[0.3em] font-lato text-center font-bold drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
                                                 Вы чувствуете, что это про Вас?
                                             </p>
                                         </div>
@@ -120,7 +121,7 @@ const Dashboard: React.FC<DashboardProps> = ({
         </section>
       </div>
 
-      {/* FOOTER STATS (Keep visible for value) */}
+      {/* FOOTER STATS */}
       <div className="shrink-0 pb-1">
         <div className="grid grid-cols-3 gap-2 mb-3">
             <StatCard label="Карма" value={prediction.karma} color="from-purple-900/40 to-black" borderColor="border-purple-500/20" textColor="text-purple-300" />
@@ -128,7 +129,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             <StatCard label="Любовь" value={prediction.love} color="from-pink-900/40 to-black" borderColor="border-pink-500/20" textColor="text-pink-300" />
         </div>
 
-        <button onClick={onReset} className="w-full text-center text-[7px] text-white/10 uppercase tracking-[0.4em] font-cinzel py-1">
+        <button onClick={onReset} className="w-full text-center text-[8px] text-white/20 uppercase tracking-[0.5em] font-cinzel py-1 hover:text-white/40 transition-colors">
             — Обновить Поток —
         </button>
       </div>
@@ -137,27 +138,27 @@ const Dashboard: React.FC<DashboardProps> = ({
       {showPayOptions && (
           <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/90 backdrop-blur-md animate-fadeIn" onClick={() => setShowPayOptions(false)}>
               <div className="w-full max-w-sm bg-[#0a0a0a] border-t border-white/10 rounded-t-[2.5rem] p-8 pb-12 shadow-[0_-20px_50px_rgba(0,0,0,1)]" onClick={e => e.stopPropagation()}>
-                  <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-8"></div>
+                  <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-8"></div>
                   <h3 className="text-xl font-cinzel text-white text-center mb-1 uppercase tracking-[0.2em]">Принять Судьбу</h3>
                   <p className="text-gray-500 text-[10px] text-center mb-10 font-lato uppercase tracking-widest text-balance">Звезды не говорят бесплатно с теми, кто не готов к истине</p>
                   
                   <div className="space-y-4">
-                      <button onClick={() => { onSingleUnlock(); setShowPayOptions(false); }} className="w-full bg-white/5 border border-white/10 p-5 rounded-2xl flex items-center justify-between group active:scale-[0.98] transition-all">
+                      <button onClick={() => { onSingleUnlock(); setShowPayOptions(false); }} className="w-full bg-white/5 border border-white/10 p-6 rounded-2xl flex items-center justify-between group active:scale-[0.98] transition-all">
                           <div className="text-left">
-                              <p className="text-[11px] font-cinzel text-white tracking-widest uppercase">Разовый Доступ</p>
-                              <p className="text-[9px] text-gray-500 uppercase mt-0.5">Только сегодня</p>
+                              <p className="text-[12px] font-cinzel text-white tracking-widest uppercase">Разовый Доступ</p>
+                              <p className="text-[9px] text-gray-500 uppercase mt-0.5">Открыть только сегодня</p>
                           </div>
                           <span className="text-gold font-bold font-cinzel text-base">99₽</span>
                       </button>
-                      <button onClick={() => { onUnlockPremium(); setShowPayOptions(false); }} className="w-full bg-gradient-to-r from-gold to-[#B8860B] p-5 rounded-2xl flex items-center justify-between shadow-[0_10px_30px_rgba(212,175,55,0.2)] group active:scale-[0.98] transition-all">
+                      <button onClick={() => { onUnlockPremium(); setShowPayOptions(false); }} className="w-full bg-gradient-to-r from-gold to-[#B8860B] p-6 rounded-2xl flex items-center justify-between shadow-[0_10px_40px_rgba(212,175,55,0.2)] group active:scale-[0.98] transition-all">
                           <div className="text-left">
-                              <p className="text-[11px] font-cinzel text-black font-bold tracking-widest uppercase">Путь Мастера</p>
+                              <p className="text-[12px] font-cinzel text-black font-bold tracking-widest uppercase">Путь Мастера</p>
                               <p className="text-[9px] text-black/70 uppercase mt-0.5 font-bold">Подписка на 30 дней</p>
                           </div>
                           <span className="text-black font-black font-cinzel text-base">199₽</span>
                       </button>
                   </div>
-                  <button onClick={() => setShowPayOptions(false)} className="w-full mt-8 text-[9px] text-gray-700 uppercase tracking-[0.4em] py-2 font-lato">Вернуться назад</button>
+                  <button onClick={() => setShowPayOptions(false)} className="w-full mt-8 text-[10px] text-gray-700 uppercase tracking-[0.4em] py-2 font-lato font-bold">Вернуться назад</button>
               </div>
           </div>
       )}
@@ -166,9 +167,9 @@ const Dashboard: React.FC<DashboardProps> = ({
 };
 
 const StatCard: React.FC<{ label: string; value: number; color: string; borderColor: string; textColor: string }> = ({ label, value, color, borderColor, textColor }) => (
-    <div className={`bg-gradient-to-b ${color} ${borderColor} border rounded-xl p-2.5 flex flex-col items-center justify-center gap-0.5 shadow-lg`}>
-        <span className="text-[8px] uppercase text-white/30 font-cinzel tracking-wider">{label}</span>
-        <span className={`text-xs font-bold font-cinzel ${textColor}`}>{value}%</span>
+    <div className={`bg-gradient-to-b ${color} ${borderColor} border rounded-xl p-3 flex flex-col items-center justify-center gap-0.5 shadow-lg`}>
+        <span className="text-[9px] uppercase text-white/30 font-cinzel tracking-wider">{label}</span>
+        <span className={`text-sm font-bold font-cinzel ${textColor}`}>{value}%</span>
     </div>
 );
 
