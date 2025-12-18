@@ -4,8 +4,8 @@ import { triggerHaptic, triggerNotification, getTelegramWebApp } from '../servic
 
 // ==========================================
 // НАСТРОЙКИ КАНАЛА:
-const CHANNEL_URL = "https://t.me/durov"; // Ссылка для пользователя
-const CHANNEL_ID = "@durov"; // ID или Username канала для бота (например "@my_channel" или "-100...")
+const CHANNEL_URL = "https://t.me/+agv13DXReBY1MzYy"; // Ссылка для пользователя
+const CHANNEL_ID = "-1003373710045"; // ID или Username канала для бота (например "@my_channel" или "-100...")
 // ==========================================
 
 interface DashboardProps {
