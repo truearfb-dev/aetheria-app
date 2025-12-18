@@ -27,7 +27,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const handleUnlockClick = () => {
     triggerHaptic('medium');
-    // Всегда показываем выбор оплаты для тестирования
+    // Показываем выбор оплаты
     setShowPayOptions(true);
   };
 
@@ -85,7 +85,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
                         {/* REMAINING CONTENT (Blurred or Clear) */}
                         <div className="relative flex-1">
-                            <div className={`transition-all duration-1000 space-y-6 pb-4 ${isLocked ? 'blur-xl select-none opacity-40 scale-[0.99]' : 'blur-0 opacity-100 scale-100'}`}>
+                            <div className={`transition-all duration-1000 space-y-6 pb-4 ${isLocked ? 'blur-xl select-none opacity-70 scale-100' : 'blur-0 opacity-100 scale-100'}`}>
                                 <p className="text-gray-300 font-lato text-sm leading-relaxed text-center whitespace-pre-wrap px-3 italic">
                                     {remainingText}
                                 </p>
@@ -98,12 +98,12 @@ const Dashboard: React.FC<DashboardProps> = ({
 
                             {/* SEAMLESS LOCK OVERLAY */}
                             {isLocked && (
-                                <div className="absolute inset-0 flex flex-col items-center justify-start pt-2 bg-gradient-to-t from-black via-black/20 to-transparent z-30">
+                                <div className="absolute inset-0 flex flex-col items-center justify-start pt-2 bg-gradient-to-t from-black via-black/5 to-transparent z-30">
                                     <div className="w-full max-w-[280px] flex flex-col items-center gap-8 mt-6">
                                         
                                         <button 
                                             onClick={handleUnlockClick}
-                                            className="group relative w-full bg-gradient-to-b from-gold to-[#B8860B] text-black font-cinzel font-bold py-5 rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.8)] active:scale-95 transition-all flex flex-col items-center overflow-hidden border border-white/30"
+                                            className="group relative w-full bg-gradient-to-b from-gold to-[#B8860B] text-black font-cinzel font-bold py-5 rounded-full shadow-[0_15px_30px_rgba(0,0,0,0.9)] active:scale-95 transition-all flex flex-col items-center overflow-hidden border border-white/30"
                                         >
                                             <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 ease-in-out"></div>
                                             
@@ -113,13 +113,13 @@ const Dashboard: React.FC<DashboardProps> = ({
                                             </span>
                                         </button>
 
-                                        <div className="flex flex-col items-center gap-2 opacity-80 drop-shadow-lg">
+                                        <div className="flex flex-col items-center gap-2 opacity-90 drop-shadow-[0_2px_4px_rgba(0,0,0,1)]">
                                             <div className="flex items-center gap-4">
-                                                <div className="h-px w-8 bg-gold/50"></div>
+                                                <div className="h-px w-8 bg-gold/60"></div>
                                                 <span className="text-[8px] text-gold font-cinzel">✦</span>
-                                                <div className="h-px w-8 bg-gold/50"></div>
+                                                <div className="h-px w-8 bg-gold/60"></div>
                                             </div>
-                                            <p className="text-[9px] text-white/70 uppercase tracking-widest font-lato text-center font-bold">
+                                            <p className="text-[10px] text-white uppercase tracking-[0.2em] font-lato text-center font-bold">
                                                 Загляните за пелену времени
                                             </p>
                                         </div>
