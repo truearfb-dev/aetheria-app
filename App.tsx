@@ -55,7 +55,11 @@ const App: React.FC = () => {
   const handleRitualStart = async () => {
     if (!userData || !prediction) return;
     try {
-        const aiText = await generateDailyHoroscope(userData.user!.zodiacSign, userData.user!.name);
+        const aiText = await generateDailyHoroscope(
+            userData.user!.zodiacSign, 
+            userData.user!.name,
+            userData.user!.birthDate
+        );
         if (aiText) {
             setPrediction(prev => prev ? { ...prev, text: aiText } : null);
         }
@@ -98,17 +102,8 @@ const App: React.FC = () => {
 
   const handleUnlockDaily = () => {
     if (userData) {
-        const CHANNEL_URL = "https://t.me/durov"; 
-        const tg = (window as any).Telegram?.WebApp;
-        if (tg) {
-            tg.openTelegramLink(CHANNEL_URL);
-            setTimeout(() => {
-                if (window.confirm("Вы подписались на канал?")) {
-                    saveUserData({ ...userData, isUnlockedToday: true });
-                    triggerNotification('success');
-                }
-            }, 2000);
-        }
+        saveUserData({ ...userData, isUnlockedToday: true });
+        triggerNotification('success');
     }
   };
 
