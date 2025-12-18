@@ -88,12 +88,12 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const highlightClass = (step: number) => {
       if (guideStep !== step) return "transition-all duration-700";
-      return "transition-all duration-700 scale-[1.03] z-30 ring-2 ring-gold shadow-[0_0_30px_rgba(212,175,55,0.4)]";
+      return "transition-all duration-700 scale-[1.02] z-30 ring-2 ring-gold shadow-[0_0_30px_rgba(212,175,55,0.4)]";
   };
 
   const oracleHighlightClass = (step: number) => {
     if (guideStep !== step) return "transition-all duration-700";
-    return "transition-all duration-700 scale-[1.03] z-30 ring-2 ring-neon shadow-[0_0_30px_rgba(176,38,255,0.4)]";
+    return "transition-all duration-700 scale-[1.02] z-30 ring-2 ring-neon shadow-[0_0_30px_rgba(176,38,255,0.4)]";
   };
 
   return (
@@ -117,19 +117,28 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </header>
 
-      {/* 2. COMPACT TAROT HOOK */}
-      <section className={`mb-4 flex justify-center perspective-1000 ${highlightClass(1)}`} onClick={() => triggerHaptic('light')}>
-        <div className="relative w-full max-w-[130px] aspect-[2/3] group">
-            <div className="absolute inset-0 bg-gold/15 rounded-lg blur-lg group-hover:blur-xl transition-all duration-700"></div>
-            <div className="relative h-full bg-gradient-to-b from-[#1a1a1a] to-black rounded-lg border border-gold/30 flex flex-col items-center justify-between p-3 shadow-2xl overflow-hidden">
-                <div className="text-[9px] text-gold/60 uppercase tracking-widest font-cinzel">Карта Дня</div>
-                <div className="text-5xl drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] animate-float">
-                    {prediction.tarotCard.icon}
-                </div>
-                <div className="text-center">
-                    <h3 className="text-gold font-cinzel text-xs leading-tight mb-1">{prediction.tarotCard.name}</h3>
-                </div>
+      {/* 2. HORIZONTAL TAROT CARD (FULL WIDTH) */}
+      <section className={`mb-4 w-full ${highlightClass(1)}`} onClick={() => triggerHaptic('light')}>
+        <div className="relative w-full h-[100px] bg-gradient-to-r from-[#1a1a1a] to-black rounded-xl border border-gold/30 flex flex-row items-center p-4 gap-6 overflow-hidden shadow-2xl">
+            {/* Background decorative glow */}
+            <div className="absolute -left-4 top-0 w-24 h-full bg-gold/10 blur-2xl rounded-full"></div>
+            
+            {/* Icon (Left side) */}
+            <div className="relative z-10 text-6xl drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] animate-float">
+                {prediction.tarotCard.icon}
             </div>
+
+            {/* Info (Right side) */}
+            <div className="relative z-10 flex flex-col justify-center flex-1">
+                <div className="text-[9px] text-gold/60 uppercase tracking-[0.3em] font-cinzel mb-1">Карта Дня</div>
+                <h3 className="text-gold font-cinzel text-lg leading-tight mb-0.5">{prediction.tarotCard.name}</h3>
+                <p className="text-[10px] text-gray-400 font-lato line-clamp-1 italic">
+                    {prediction.tarotCard.meaning}
+                </p>
+            </div>
+            
+            {/* Decorative element (Right corner) */}
+            <div className="absolute right-2 bottom-2 text-gold/10 text-2xl font-cinzel opacity-20">✦</div>
         </div>
       </section>
 
